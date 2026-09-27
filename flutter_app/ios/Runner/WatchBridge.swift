@@ -36,6 +36,10 @@ final class WatchBridge: NSObject {
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "pushSnapshot":
+            // Dart -> Watch: refresh the watch's cached status snapshot.
+            // updateApplicationContext queues the latest payload and delivers it
+            // when the watch is reachable, so the watch face shows current data
+            // even if it was asleep or out of range when Dart sent the update.
             if let payload = call.arguments as? [String: Any] {
                 pushSnapshot(payload)
             }
