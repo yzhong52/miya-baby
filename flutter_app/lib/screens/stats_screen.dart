@@ -6,15 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../models/activity_event.dart';
+import '../services/stats.dart';
 import '../state/providers.dart';
-
-class _DayStats {
-  int feeds = 0;
-  double bottleMl = 0;
-  int nursingMin = 0;
-  int sleepMin = 0;
-  int diapers = 0;
-}
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -24,38 +17,8 @@ class StatsScreen extends ConsumerWidget {
     final events = ref.watch(eventsProvider);
     final profile = ref.watch(profileProvider);
 
-    final now = DateTime.now();
-    final days = List.generate(
-        7, (i) => DateTime(now.year, now.month, now.day)
-            .subtract(Duration(days: 6 - i)));
-    final stats = <DateTime, _DayStats>{
-      for (final d in days) d: _DayStats()
-    };
-
-    for (final e in events) {
-      final day =
-          DateTime(e.startTime.year, e.startTime.month, e.startTime.day);
-      final s = stats[day];
-      if (s == null) continue;
-      switch (e.type) {
-        case EventType.feeding:
-          s.feeds++;
-          final kind = FeedKindX.fromName(
-              e.data['feedKind'] as String? ?? 'nursing');
-          if (kind == FeedKind.bottle) {
-            s.bottleMl += (e.data['amountMl'] as num?)?.toDouble() ?? 0;
-          } else if (kind == FeedKind.nursing && e.duration != null) {
-            s.nursingMin += e.duration!.inMinutes;
-          }
-        case EventType.sleep:
-          if (e.duration != null) s.sleepMin += e.duration!.inMinutes;
-        case EventType.diaper:
-          s.diapers++;
-        case EventType.growth:
-        case EventType.note:
-          break;
-      }
-    }
+    final stats = computeDayStats(events);
+    final days = stats.keys.toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Stats')),
