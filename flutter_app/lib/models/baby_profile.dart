@@ -8,7 +8,7 @@ class BabyProfile {
   final bool metricUnits;
 
   const BabyProfile({
-    this.name = 'Anya',
+    this.name = 'Miya',
     this.birthDate,
     this.photoPath,
     this.metricUnits = true,
@@ -42,7 +42,7 @@ class BabyProfile {
       };
 
   factory BabyProfile.fromJson(Map<String, dynamic> json) => BabyProfile(
-        name: json['name'] as String? ?? 'Anya',
+        name: json['name'] as String? ?? 'Miya',
         birthDate: json['birthDate'] != null
             ? DateTime.tryParse(json['birthDate'] as String)
             : null,

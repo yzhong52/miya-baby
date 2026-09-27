@@ -64,7 +64,7 @@ class SettingsScreen extends ConsumerWidget {
       final json = repo.exportJson(profile);
       final text =
           const JsonEncoder.withIndent('  ').convert(json);
-      await Share.share(text, subject: 'Anya Baby export');
+      await Share.share(text, subject: 'Miya Baby export');
     }
 
     return Scaffold(
@@ -125,7 +125,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Anya Baby v0.1.0 · data stays on this device',
+              'Miya Baby v0.1.0 · data stays on this device',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

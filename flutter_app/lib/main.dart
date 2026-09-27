@@ -22,19 +22,19 @@ Future<void> main() async {
         repositoryProvider.overrideWithValue(repo),
         watchServiceProvider.overrideWithValue(watch),
       ],
-      child: const AnyaBabyApp(),
+      child: const MiyaBabyApp(),
     ),
   );
 }
 
-class AnyaBabyApp extends ConsumerStatefulWidget {
-  const AnyaBabyApp({super.key});
+class MiyaBabyApp extends ConsumerStatefulWidget {
+  const MiyaBabyApp({super.key});
 
   @override
-  ConsumerState<AnyaBabyApp> createState() => _AnyaBabyAppState();
+  ConsumerState<MiyaBabyApp> createState() => _MiyaBabyAppState();
 }
 
-class _AnyaBabyAppState extends ConsumerState<AnyaBabyApp> {
+class _MiyaBabyAppState extends ConsumerState<MiyaBabyApp> {
   @override
   void initState() {
     super.initState();
@@ -77,7 +77,7 @@ class _AnyaBabyAppState extends ConsumerState<AnyaBabyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Anya Baby',
+      title: 'Miya Baby',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),

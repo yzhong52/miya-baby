@@ -1,7 +1,7 @@
 /// Bridge between Dart and the native iOS WatchConnectivity layer.
 ///
 /// The iOS side (`ios/Runner/WatchBridge.swift`) owns the WCSession and
-/// forwards watch messages here over the `anya_baby/watch` method channel.
+/// forwards watch messages here over the `miya_baby/watch` method channel.
 /// Dart handles them (log actions) and pushes snapshots back to the watch.
 library;
 
@@ -12,7 +12,7 @@ import '../models/activity_event.dart';
 typedef WatchActionHandler = Future<void> Function(Map<String, dynamic> msg);
 
 class WatchService {
-  static const _channel = MethodChannel('anya_baby/watch');
+  static const _channel = MethodChannel('miya_baby/watch');
 
   WatchActionHandler? onWatchMessage;
 
