@@ -27,18 +27,14 @@ class SettingsScreen extends ConsumerWidget {
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration:
-                const InputDecoration(border: OutlineInputBorder()),
-            onSubmitted: (_) =>
-                Navigator.pop(c, controller.text.trim()),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+            onSubmitted: (_) => Navigator.pop(c, controller.text.trim()),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(c),
-                child: const Text('Cancel')),
+                onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
             TextButton(
-                onPressed: () =>
-                    Navigator.pop(c, controller.text.trim()),
+                onPressed: () => Navigator.pop(c, controller.text.trim()),
                 child: const Text('Save')),
           ],
         ),
@@ -62,8 +58,7 @@ class SettingsScreen extends ConsumerWidget {
 
     Future<void> exportData() async {
       final json = repo.exportJson(profile);
-      final text =
-          const JsonEncoder.withIndent('  ').convert(json);
+      final text = const JsonEncoder.withIndent('  ').convert(json);
       await Share.share(text, subject: 'Miya Baby export');
     }
 
@@ -96,15 +91,13 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Preferences',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Preferences', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
             child: SwitchListTile(
               secondary: const Icon(Icons.straighten_outlined),
               title: const Text('Metric units'),
-              subtitle:
-                  const Text('Off = imperial (oz, lb, in)'),
+              subtitle: const Text('Off = imperial (oz, lb, in)'),
               value: profile.metricUnits,
               onChanged: (v) async =>
                   profileNotifier.update(profile.copyWith(metricUnits: v)),
@@ -117,8 +110,7 @@ class SettingsScreen extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.ios_share_outlined),
               title: const Text('Export data (JSON)'),
-              subtitle:
-                  const Text('Share a backup of all logged events'),
+              subtitle: const Text('Share a backup of all logged events'),
               onTap: exportData,
             ),
           ),

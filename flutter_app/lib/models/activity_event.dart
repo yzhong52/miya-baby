@@ -71,7 +71,7 @@ class ActivityEvent {
   bool get isActive => endTime == null && data['active'] == true;
 
   Duration? get duration =>
-      endTime != null ? endTime!.difference(startTime) : null;
+      endTime?.difference(startTime);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -133,16 +133,15 @@ class ActivityEvent {
             return 'Bottle · $amt';
           case FeedKind.solids:
             final food = (data['food'] as String?)?.trim();
-            return food == null || food.isEmpty
-                ? 'Solids'
-                : 'Solids · $food';
+            return food == null || food.isEmpty ? 'Solids' : 'Solids · $food';
         }
       case EventType.diaper:
         final kind =
             DiaperKindX.fromName(data['diaperKind'] as String? ?? 'wet');
         return 'Diaper · ${kind.label}';
       case EventType.sleep:
-        final mins = duration != null ? '${duration!.inMinutes} min' : 'ongoing';
+        final mins =
+            duration != null ? '${duration!.inMinutes} min' : 'ongoing';
         return 'Sleep · $mins';
       case EventType.growth:
         final parts = <String>[];

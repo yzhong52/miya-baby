@@ -5,16 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../models/activity_event.dart';
+import '../services/stats.dart';
 import '../state/providers.dart';
-
-class _DayStats {
-  int feeds = 0;
-  double bottleMl = 0;
-  int nursingMin = 0;
-  int sleepMin = 0;
-  int diapers = 0;
-}
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -24,38 +16,8 @@ class StatsScreen extends ConsumerWidget {
     final events = ref.watch(eventsProvider);
     final profile = ref.watch(profileProvider);
 
-    final now = DateTime.now();
-    final days = List.generate(
-        7, (i) => DateTime(now.year, now.month, now.day)
-            .subtract(Duration(days: 6 - i)));
-    final stats = <DateTime, _DayStats>{
-      for (final d in days) d: _DayStats()
-    };
-
-    for (final e in events) {
-      final day =
-          DateTime(e.startTime.year, e.startTime.month, e.startTime.day);
-      final s = stats[day];
-      if (s == null) continue;
-      switch (e.type) {
-        case EventType.feeding:
-          s.feeds++;
-          final kind = FeedKindX.fromName(
-              e.data['feedKind'] as String? ?? 'nursing');
-          if (kind == FeedKind.bottle) {
-            s.bottleMl += (e.data['amountMl'] as num?)?.toDouble() ?? 0;
-          } else if (kind == FeedKind.nursing && e.duration != null) {
-            s.nursingMin += e.duration!.inMinutes;
-          }
-        case EventType.sleep:
-          if (e.duration != null) s.sleepMin += e.duration!.inMinutes;
-        case EventType.diaper:
-          s.diapers++;
-        case EventType.growth:
-        case EventType.note:
-          break;
-      }
-    }
+    final stats = computeDayStats(events);
+    final days = stats.keys.toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Stats')),
@@ -83,15 +45,13 @@ class StatsScreen extends ConsumerWidget {
           _StatCard(
             title: 'Sleep per day (hours)',
             days: days,
-            values:
-                days.map((d) => stats[d]!.sleepMin / 60.0).toList(),
+            values: days.map((d) => stats[d]!.sleepMin / 60.0).toList(),
             format: (v) => v.toStringAsFixed(1),
           ),
           _StatCard(
             title: 'Diapers per day',
             days: days,
-            values:
-                days.map((d) => stats[d]!.diapers.toDouble()).toList(),
+            values: days.map((d) => stats[d]!.diapers.toDouble()).toList(),
             format: (v) => v.toStringAsFixed(0),
           ),
         ],
@@ -115,8 +75,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxV =
-        values.fold<double>(0, (m, v) => v > m ? v : m);
+    final maxV = values.fold<double>(0, (m, v) => v > m ? v : m);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -134,15 +93,12 @@ class _StatCard extends StatelessWidget {
                   for (var i = 0; i < days.length; i++)
                     Expanded(
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(format(values[i]),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall),
+                                style: Theme.of(context).textTheme.bodySmall),
                             const SizedBox(height: 2),
                             Expanded(
                               child: Align(
@@ -153,11 +109,9 @@ class _StatCard extends StatelessWidget {
                                       : 0.04,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                   ),
                                 ),
@@ -165,9 +119,7 @@ class _StatCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(DateFormat.E().format(days[i]),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall),
+                                style: Theme.of(context).textTheme.bodySmall),
                           ],
                         ),
                       ),

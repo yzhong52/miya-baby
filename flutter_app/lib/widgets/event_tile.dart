@@ -21,12 +21,12 @@ class EventTile extends StatelessWidget {
   });
 
   IconData get _icon => switch (event.type) {
-        EventType.feeding => switch (
-            FeedKindX.fromName(event.data['feedKind'] as String? ?? 'nursing')) {
-              FeedKind.nursing => Icons.child_care,
-              FeedKind.bottle => Icons.local_drink,
-              FeedKind.solids => Icons.restaurant,
-            },
+        EventType.feeding => switch (FeedKindX.fromName(
+              event.data['feedKind'] as String? ?? 'nursing')) {
+            FeedKind.nursing => Icons.child_care,
+            FeedKind.bottle => Icons.local_drink,
+            FeedKind.solids => Icons.restaurant,
+          },
         EventType.diaper => Icons.baby_changing_station,
         EventType.sleep => Icons.bedtime,
         EventType.growth => Icons.straighten,

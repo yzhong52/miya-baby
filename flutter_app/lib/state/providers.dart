@@ -130,8 +130,7 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
       return null;
     }
 
-    String? isoOrNull(ActivityEvent? e) =>
-        e?.startTime.toIso8601String();
+    String? isoOrNull(ActivityEvent? e) => e?.startTime.toIso8601String();
 
     return {
       'lastFeed': lastOf(EventType.feeding)?.toJson(),
@@ -161,8 +160,7 @@ final eventsForDayProvider =
   final start = DateTime(day.year, day.month, day.day);
   final end = start.add(const Duration(days: 1));
   return events
-      .where((e) =>
-          !e.startTime.isBefore(start) && e.startTime.isBefore(end))
+      .where((e) => !e.startTime.isBefore(start) && e.startTime.isBefore(end))
       .toList();
 });
 

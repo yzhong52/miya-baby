@@ -18,20 +18,17 @@ class GrowthScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final notifier = ref.read(eventsProvider.notifier);
 
-    final growth = events
-        .where((e) => e.type == EventType.growth)
-        .toList()
+    final growth = events.where((e) => e.type == EventType.growth).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Growth')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final data = await showGrowthSheet(context,
-              metric: profile.metricUnits);
+          final data =
+              await showGrowthSheet(context, metric: profile.metricUnits);
           if (data != null && data.isNotEmpty && context.mounted) {
-            await notifier.logInstant(
-                type: EventType.growth, data: data);
+            await notifier.logInstant(type: EventType.growth, data: data);
           }
         },
         icon: const Icon(Icons.add),
@@ -45,9 +42,7 @@ class GrowthScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 _TrendCard(
-                  title: profile.metricUnits
-                      ? 'Weight (kg)'
-                      : 'Weight (lb)',
+                  title: profile.metricUnits ? 'Weight (kg)' : 'Weight (lb)',
                   points: [
                     for (final e in growth)
                       if (e.data['weightKg'] != null)
@@ -60,9 +55,7 @@ class GrowthScreen extends ConsumerWidget {
                   ],
                 ),
                 _TrendCard(
-                  title: profile.metricUnits
-                      ? 'Height (cm)'
-                      : 'Height (in)',
+                  title: profile.metricUnits ? 'Height (cm)' : 'Height (in)',
                   points: [
                     for (final e in growth)
                       if (e.data['heightCm'] != null)
@@ -70,13 +63,11 @@ class GrowthScreen extends ConsumerWidget {
                             e.startTime,
                             profile.metricUnits
                                 ? (e.data['heightCm'] as num).toDouble()
-                                : (e.data['heightCm'] as num).toDouble() /
-                                    2.54)
+                                : (e.data['heightCm'] as num).toDouble() / 2.54)
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('Entries',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text('Entries', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 for (final e in growth.reversed)
                   Card(
@@ -85,8 +76,7 @@ class GrowthScreen extends ConsumerWidget {
                       leading: const CircleAvatar(
                           child: Icon(Icons.straighten, size: 20)),
                       title: Text(e.summary(metric: profile.metricUnits)),
-                      subtitle: Text(
-                          DateFormat.yMMMd().format(e.startTime)),
+                      subtitle: Text(DateFormat.yMMMd().format(e.startTime)),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, size: 20),
                         onPressed: () => notifier.remove(e.id),
@@ -132,8 +122,8 @@ class _TrendCard extends StatelessWidget {
                               : 'Log one more to see the trend',
                           style: Theme.of(context).textTheme.bodySmall))
                   : CustomPaint(
-                      painter: _LinePainter(points,
-                          Theme.of(context).colorScheme.primary),
+                      painter: _LinePainter(
+                          points, Theme.of(context).colorScheme.primary),
                       size: Size.infinite,
                     ),
             ),

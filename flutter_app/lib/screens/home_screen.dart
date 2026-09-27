@@ -117,8 +117,7 @@ class _TimerCardState extends State<_TimerCard> {
     final mm = elapsed.inMinutes.toString().padLeft(2, '0');
     final ss = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
     final hh = elapsed.inHours;
-    final timeStr =
-        hh > 0 ? '$hh:$mm:$ss' : '$mm:$ss';
+    final timeStr = hh > 0 ? '$hh:$mm:$ss' : '$mm:$ss';
 
     return Card(
       color: Theme.of(context).colorScheme.primaryContainer,
@@ -134,7 +133,8 @@ class _TimerCardState extends State<_TimerCard> {
                 children: [
                   Text(widget.label,
                       style: Theme.of(context).textTheme.titleMedium),
-                  Text('Started ${DateFormat.jm().format(widget.event.startTime)} · $timeStr',
+                  Text(
+                      'Started ${DateFormat.jm().format(widget.event.startTime)} · $timeStr',
                       style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ),
@@ -210,8 +210,7 @@ class _QuickLogGrid extends ConsumerWidget {
     }
 
     final buttons = [
-      _QuickButton(
-          icon: Icons.child_care, label: 'Nurse', onTap: startNursing),
+      _QuickButton(icon: Icons.child_care, label: 'Nurse', onTap: startNursing),
       _QuickButton(
           icon: Icons.local_drink_outlined, label: 'Bottle', onTap: logBottle),
       _QuickButton(
