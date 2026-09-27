@@ -1,4 +1,4 @@
-/// Core event model for Anya Baby.
+/// Core event model for Miya Baby.
 ///
 /// Every logged activity (feeding, diaper, sleep, growth, note) is an
 /// [ActivityEvent]. Type-specific details live in [data] so the storage

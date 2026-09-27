@@ -1,4 +1,4 @@
-/// Local persistence for Anya Baby, backed by Hive boxes storing JSON.
+/// Local persistence for Miya Baby, backed by Hive boxes storing JSON.
 ///
 /// * `events` box: key = event id, value = [ActivityEvent.toJson] map.
 /// * `settings` box: single `profile` key with the baby profile JSON.
@@ -51,7 +51,7 @@ class AppRepository {
 
   /// Export everything as a JSON-serializable map (for share/export).
   Map<String, dynamic> exportJson(BabyProfile profile) => {
-        'app': 'anya_baby',
+        'app': 'miya_baby',
         'version': 1,
         'exportedAt': DateTime.now().toIso8601String(),
         'profile': profile.toJson(),

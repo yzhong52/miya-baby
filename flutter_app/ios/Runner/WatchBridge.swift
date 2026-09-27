@@ -1,5 +1,5 @@
 /// WatchBridge: relays messages between the Apple Watch (WCSession)
-/// and Dart (FlutterMethodChannel "anya_baby/watch").
+/// and Dart (FlutterMethodChannel "miya_baby/watch").
 ///
 /// - Watch -> iPhone: `sendMessage` with {action, ...} is forwarded to Dart
 ///   via the method channel as `watchMessage`.
@@ -13,7 +13,7 @@ import UIKit
 import WatchConnectivity
 
 final class WatchBridge: NSObject {
-    static let channelName = "anya_baby/watch"
+    static let channelName = "miya_baby/watch"
 
     private var channel: FlutterMethodChannel?
     private var session: WCSession? { WCSession.isSupported() ? WCSession.default : nil }

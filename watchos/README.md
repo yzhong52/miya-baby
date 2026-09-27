@@ -1,6 +1,6 @@
-# AnyaBabyWatch — watchOS companion app
+# MiyaBabyWatch — watchOS companion app
 
-Native SwiftUI Apple Watch app that pairs with the Anya Baby iPhone app
+Native SwiftUI Apple Watch app that pairs with the Miya Baby iPhone app
 (Flutter) over WatchConnectivity.
 
 ## What it does
@@ -47,7 +47,7 @@ Event JSON matches the Dart `ActivityEvent.toJson()` shape
 
 1. Open `flutter_app/ios/Runner.xcworkspace` in Xcode.
 2. File → New → Target → watchOS → App.
-   - Product name: `AnyaBabyWatch`
+   - Product name: `MiyaBabyWatch`
    - Bundle Identifier: `<iOS-app-bundle-id>.watchkitapp`
    - Make sure the watch target's deployment target matches your watch.
 3. Drag the four Swift files from this folder into the new target
@@ -57,4 +57,4 @@ Event JSON matches the Dart `ActivityEvent.toJson()` shape
 
 The iPhone side needs no extra setup: `flutter_app/ios/Runner/`
 already contains `WatchBridge.swift` and an `AppDelegate.swift` that
-wires the `anya_baby/watch` method channel to `WCSession`.
+wires the `miya_baby/watch` method channel to `WCSession`.

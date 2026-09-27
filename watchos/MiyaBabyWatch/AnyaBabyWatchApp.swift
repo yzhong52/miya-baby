@@ -1,8 +1,8 @@
-/// Entry point for the Anya Baby watchOS companion app.
+/// Entry point for the Miya Baby watchOS companion app.
 import SwiftUI
 
 @main
-struct AnyaBabyWatchApp: App {
+struct MiyaBabyWatchApp: App {
     @StateObject private var session = WatchSessionManager.shared
 
     var body: some Scene {

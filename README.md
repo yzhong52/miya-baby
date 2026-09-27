@@ -1,4 +1,4 @@
-# Anya Baby
+# Miya Baby
 
 A baby daily-routine tracker inspired by Nara Baby — log feedings, diapers,
 sleep, and growth, with timers, history, stats, and an Apple Watch companion
@@ -7,12 +7,12 @@ for one-tap logging.
 ## What's inside
 
 ```
-anya-baby/
+miya-baby/
 ├── flutter_app/   # Flutter app — iOS + Android
 │   ├── lib/       # Dart source (models, screens, state, services)
 │   └── ios/       # iOS Runner incl. WatchBridge.swift (WatchConnectivity)
 └── watchos/       # Native watchOS companion app (SwiftUI)
-    └── AnyaBabyWatch/
+    └── MiyaBabyWatch/
 ```
 
 ### Phone app (Flutter)
@@ -48,11 +48,11 @@ active timers) to the watch.
 The watchOS app is a native companion target:
 
 1. Open `flutter_app/ios/Runner.xcworkspace` in Xcode.
-2. File → New → Target → watchOS → App. Name it `AnyaBabyWatch`,
+2. File → New → Target → watchOS → App. Name it `MiyaBabyWatch`,
    bundle id `<your-ios-bundle-id>.watchkitapp`.
-3. Add the Swift files from `watchos/AnyaBabyWatch/` to the new target.
+3. Add the Swift files from `watchos/MiyaBabyWatch/` to the new target.
 4. The iOS side is already wired: `ios/Runner/WatchBridge.swift` +
-   `AppDelegate.swift` expose the `anya_baby/watch` method channel and
+   `AppDelegate.swift` expose the `miya_baby/watch` method channel and
    relay messages between Dart and the watch.
 
 See `watchos/README.md` for the message protocol details.
