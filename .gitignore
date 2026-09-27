@@ -1,0 +1,28 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.idea/
+.vscode/
+
+# iOS / Xcode
+flutter_app/ios/Pods/
+flutter_app/ios/.symlinks/
+flutter_app/ios/Flutter/Flutter.podspec
+**/xcuserdata/
+**/DerivedData/
+*.xcworkspace/xcuserdata/
+
+# Android
+flutter_app/android/.gradle/
+flutter_app/android/app/build/
+flutter_app/android/local.properties
+
+# macOS
+.DS_Store
+
+# Hive
+*.hive
+*.lock
