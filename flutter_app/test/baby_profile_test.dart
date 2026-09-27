@@ -25,8 +25,7 @@ void main() {
 
     test('years and months', () {
       final p = BabyProfile(birthDate: DateTime(2024, 7, 27));
-      expect(
-          p.ageString(now: DateTime(2026, 9, 27)), '2 years 2 months old');
+      expect(p.ageString(now: DateTime(2026, 9, 27)), '2 years 2 months old');
     });
 
     test('exact years', () {

@@ -33,28 +33,24 @@ void main() {
             end: DateTime(2026, 9, 27, 9, 20),
             data: {'feedKind': 'nursing', 'side': 'left'}),
         _event(EventType.diaper, DateTime(2026, 9, 27, 10, 0),
-            end: DateTime(2026, 9, 27, 10, 0),
-            data: {'diaperKind': 'wet'}),
+            end: DateTime(2026, 9, 27, 10, 0), data: {'diaperKind': 'wet'}),
         _event(EventType.sleep, DateTime(2026, 9, 27, 13, 0),
             end: DateTime(2026, 9, 27, 14, 30)),
         // Yesterday: 1 diaper.
         _event(EventType.diaper, DateTime(2026, 9, 26, 10, 0),
-            end: DateTime(2026, 9, 26, 10, 0),
-            data: {'diaperKind': 'dirty'}),
+            end: DateTime(2026, 9, 26, 10, 0), data: {'diaperKind': 'dirty'}),
         // 10 days ago: outside the window, must be ignored.
         _event(EventType.feeding, DateTime(2026, 9, 17, 8, 0),
             end: DateTime(2026, 9, 17, 8, 0),
             data: {'feedKind': 'bottle', 'amountMl': 999.0}),
         // Growth + note today: counted in feeds? No — ignored by stats.
         _event(EventType.growth, DateTime(2026, 9, 27, 15, 0),
-            end: DateTime(2026, 9, 27, 15, 0),
-            data: {'weightKg': 8.5}),
+            end: DateTime(2026, 9, 27, 15, 0), data: {'weightKg': 8.5}),
         _event(EventType.note, DateTime(2026, 9, 27, 16, 0),
             end: DateTime(2026, 9, 27, 16, 0)),
       ];
 
-  test('aggregates a day correctly and ignores out-of-window events',
-      () {
+  test('aggregates a day correctly and ignores out-of-window events', () {
     final stats = computeDayStats(sample(), now: now);
     expect(stats.length, 7);
 

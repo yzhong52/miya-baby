@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../models/activity_event.dart';
 import '../services/stats.dart';
 import '../state/providers.dart';
 
@@ -46,15 +45,13 @@ class StatsScreen extends ConsumerWidget {
           _StatCard(
             title: 'Sleep per day (hours)',
             days: days,
-            values:
-                days.map((d) => stats[d]!.sleepMin / 60.0).toList(),
+            values: days.map((d) => stats[d]!.sleepMin / 60.0).toList(),
             format: (v) => v.toStringAsFixed(1),
           ),
           _StatCard(
             title: 'Diapers per day',
             days: days,
-            values:
-                days.map((d) => stats[d]!.diapers.toDouble()).toList(),
+            values: days.map((d) => stats[d]!.diapers.toDouble()).toList(),
             format: (v) => v.toStringAsFixed(0),
           ),
         ],
@@ -78,8 +75,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxV =
-        values.fold<double>(0, (m, v) => v > m ? v : m);
+    final maxV = values.fold<double>(0, (m, v) => v > m ? v : m);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -97,15 +93,12 @@ class _StatCard extends StatelessWidget {
                   for (var i = 0; i < days.length; i++)
                     Expanded(
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(format(values[i]),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall),
+                                style: Theme.of(context).textTheme.bodySmall),
                             const SizedBox(height: 2),
                             Expanded(
                               child: Align(
@@ -116,11 +109,9 @@ class _StatCard extends StatelessWidget {
                                       : 0.04,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                   ),
                                 ),
@@ -128,9 +119,7 @@ class _StatCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(DateFormat.E().format(days[i]),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall),
+                                style: Theme.of(context).textTheme.bodySmall),
                           ],
                         ),
                       ),

@@ -83,13 +83,11 @@ void main() {
       expect(watch.snapshots, 1);
     });
 
-    test('startTimer creates an active timer; stopTimer ends it',
-        () async {
+    test('startTimer creates an active timer; stopTimer ends it', () async {
       final notifier = container.read(eventsProvider.notifier);
       await notifier.startTimer(
           type: EventType.sleep, data: const {}, note: null);
-      expect(
-          notifier.activeTimer(EventType.sleep)?.isActive, isTrue);
+      expect(notifier.activeTimer(EventType.sleep)?.isActive, isTrue);
 
       final stopped = await notifier.stopTimer(EventType.sleep);
       expect(stopped, isNotNull);

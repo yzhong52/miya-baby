@@ -31,8 +31,8 @@ class AppRepository {
       final raw = _events.get(key);
       if (raw is Map) {
         try {
-          list.add(ActivityEvent.fromJson(
-              Map<String, dynamic>.from(raw as Map)));
+          list.add(
+              ActivityEvent.fromJson(Map<String, dynamic>.from(raw)));
         } catch (_) {
           // Skip corrupt entries rather than crashing.
         }
@@ -64,7 +64,7 @@ class AppRepository {
     final raw = _settings.get(_profileKey);
     if (raw is Map) {
       try {
-        return BabyProfile.fromJson(Map<String, dynamic>.from(raw as Map));
+        return BabyProfile.fromJson(Map<String, dynamic>.from(raw));
       } catch (_) {}
     }
     return const BabyProfile();

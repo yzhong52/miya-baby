@@ -20,7 +20,8 @@ class HistoryScreen extends ConsumerWidget {
 
     final byDay = <DateTime, List<ActivityEvent>>{};
     for (final e in events) {
-      final day = DateTime(e.startTime.year, e.startTime.month, e.startTime.day);
+      final day =
+          DateTime(e.startTime.year, e.startTime.month, e.startTime.day);
       byDay.putIfAbsent(day, () => []).add(e);
     }
     final days = byDay.keys.toList()..sort((a, b) => b.compareTo(a));

@@ -102,8 +102,7 @@ void main() {
         end: DateTime(2026, 9, 27, 14, 30),
       );
       expect(done.summary(), 'Sleep · 90 min');
-      final ongoing =
-          _event(type: EventType.sleep, data: {'active': true});
+      final ongoing = _event(type: EventType.sleep, data: {'active': true});
       expect(ongoing.summary(), 'Sleep · ongoing');
     });
 
@@ -120,8 +119,8 @@ void main() {
     });
 
     test('note echoes trimmed text', () {
-      expect(_event(type: EventType.note, note: '  fussy  ').summary(),
-          'fussy');
+      expect(
+          _event(type: EventType.note, note: '  fussy  ').summary(), 'fussy');
       expect(_event(type: EventType.note).summary(), 'Note');
     });
   });

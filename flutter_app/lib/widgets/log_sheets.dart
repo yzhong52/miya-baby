@@ -34,8 +34,7 @@ Future<DiaperKind?> showDiaperSheet(BuildContext context) {
   );
 }
 
-Future<double?> showBottleSheet(BuildContext context,
-    {required bool metric}) {
+Future<double?> showBottleSheet(BuildContext context, {required bool metric}) {
   double amount = metric ? 120 : 118.3; // 120 ml ≈ 4 oz
   return showModalBottomSheet<double>(
     context: context,
@@ -59,8 +58,7 @@ Future<double?> showBottleSheet(BuildContext context,
                 min: metric ? 30 : 29.6,
                 max: metric ? 300 : 266,
                 divisions: 54,
-                value: amount.clamp(
-                    metric ? 30 : 29.6, metric ? 300 : 266),
+                value: amount.clamp(metric ? 30 : 29.6, metric ? 300 : 266),
                 label: metric
                     ? '${amount.toStringAsFixed(0)} ml'
                     : '${(amount / 29.5735).toStringAsFixed(1)} oz',
@@ -106,8 +104,7 @@ Future<String?> showSolidsSheet(BuildContext context) {
                 hintText: 'e.g. oatmeal + banana',
                 border: OutlineInputBorder(),
               ),
-              onSubmitted: (_) =>
-                  Navigator.pop(c, controller.text.trim()),
+              onSubmitted: (_) => Navigator.pop(c, controller.text.trim()),
             ),
             const SizedBox(height: 16),
             FilledButton(
@@ -219,8 +216,7 @@ Future<Map<String, double>?> showGrowthSheet(BuildContext context,
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Log growth',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               TextFormField(
                 controller: weightCtrl,
@@ -250,8 +246,7 @@ Future<Map<String, double>?> showGrowthSheet(BuildContext context,
                     const TextInputType.numberWithOptions(decimal: true),
                 validator: numberValidator,
                 decoration: InputDecoration(
-                  labelText:
-                      metric ? 'Head circumference (cm)' : 'Head (in)',
+                  labelText: metric ? 'Head circumference (cm)' : 'Head (in)',
                   border: const OutlineInputBorder(),
                 ),
               ),
