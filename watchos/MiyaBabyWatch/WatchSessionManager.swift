@@ -8,6 +8,7 @@ import Combine
 import WatchConnectivity
 
 final class WatchSessionManager: NSObject, ObservableObject {
+    /// Single session shared by the whole watch app.
     static let shared = WatchSessionManager()
 
     @Published var lastFeedText: String = "—"
@@ -15,6 +16,7 @@ final class WatchSessionManager: NSObject, ObservableObject {
     @Published var lastSleepText: String = "—"
     @Published var sleepActiveSince: Date?
     @Published var nursingActiveSince: Date?
+    /// Updated on activation and reachability changes; drives the offline UI.
     @Published var phoneReachable = false
     @Published var lastError: String?
 
@@ -54,6 +56,7 @@ final class WatchSessionManager: NSObject, ObservableObject {
     }
 
     func requestSnapshot() {
+        // Ask the phone for a fresh snapshot; called when the view appears.
         send(["action": "requestSnapshot"])
     }
 
