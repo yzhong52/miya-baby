@@ -1,4 +1,7 @@
 /// Reusable tile rendering one logged event in timelines / history.
+///
+/// Shows the event summary, an optional note, the time, and a delete
+/// button (with confirmation) when [onDelete] is provided.
 library;
 
 import 'package:flutter/material.dart';
@@ -53,6 +56,8 @@ class EventTile extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
                 onPressed: () async {
+                  // Confirm before deleting — the tile stays dumb, the
+                  // parent owns the actual removal.
                   final ok = await showDialog<bool>(
                     context: context,
                     builder: (c) => AlertDialog(

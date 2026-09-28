@@ -100,6 +100,7 @@ class _TimerCardState extends State<_TimerCard> {
   @override
   void initState() {
     super.initState();
+    // Tick every second so the elapsed-time readout stays live.
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -194,6 +195,7 @@ class _QuickLogGrid extends ConsumerWidget {
     }
 
     Future<void> toggleSleep() async {
+      // Sleep is a toggle: stop the running timer, or start one.
       final active = notifier.activeTimer(EventType.sleep);
       if (active != null) {
         await notifier.stopTimer(EventType.sleep);

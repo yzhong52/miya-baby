@@ -57,6 +57,7 @@ class SettingsScreen extends ConsumerWidget {
     }
 
     Future<void> exportData() async {
+      // Pretty-printed JSON of profile + all events, via the share sheet.
       final json = repo.exportJson(profile);
       final text = const JsonEncoder.withIndent('  ').convert(json);
       await Share.share(text, subject: 'Miya Baby export');

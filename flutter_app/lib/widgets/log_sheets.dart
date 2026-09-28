@@ -1,4 +1,6 @@
 /// Bottom-sheet pickers used by the quick-log buttons.
+///
+/// Each returns the user's choice, or null when the sheet is dismissed.
 library;
 
 import 'package:flutter/material.dart';
@@ -35,6 +37,7 @@ Future<DiaperKind?> showDiaperSheet(BuildContext context) {
 }
 
 Future<double?> showBottleSheet(BuildContext context, {required bool metric}) {
+  // Default 120 ml ≈ 4 oz; slider spans roughly 1–10 oz in either unit.
   double amount = metric ? 120 : 118.3; // 120 ml ≈ 4 oz
   return showModalBottomSheet<double>(
     context: context,
@@ -81,6 +84,8 @@ Future<String?> showSolidsSheet(BuildContext context) {
   final controller = TextEditingController();
   return showModalBottomSheet<String>(
     context: context,
+    // Full-height sheet that pads above the keyboard (viewInsets) so the
+    // text field stays visible while typing.
     isScrollControlled: true,
     builder: (c) => SafeArea(
       child: Padding(
@@ -261,6 +266,7 @@ Future<Map<String, double>?> showGrowthSheet(BuildContext context,
                   var w = parse(weightCtrl);
                   var h = parse(heightCtrl);
                   var hc = parse(headCtrl);
+                  // Storage is metric-only: convert imperial input back.
                   if (!metric) {
                     if (w != null) w = w / 2.20462;
                     if (h != null) h = h * 2.54;

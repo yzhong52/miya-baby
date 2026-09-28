@@ -151,6 +151,7 @@ class _LinePainter extends CustomPainter {
     final values = points.map((p) => p.value).toList();
     final minV = values.reduce((a, b) => a < b ? a : b);
     final maxV = values.reduce((a, b) => a > b ? a : b);
+    // Flat line (all values equal) would divide by zero — fall back to 1.
     final span = (maxV - minV) == 0 ? 1.0 : (maxV - minV);
 
     final paint = Paint()
@@ -163,6 +164,8 @@ class _LinePainter extends CustomPainter {
     final path = Path();
     for (var i = 0; i < points.length; i++) {
       final x = size.width * i / (points.length - 1);
+      // Canvas y grows downward: flip the value, then inset 8px top/bottom
+      // so dots never clip at the edges.
       final y = size.height -
           ((points[i].value - minV) / span) * (size.height - 16) -
           8;

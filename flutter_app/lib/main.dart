@@ -13,6 +13,8 @@ import 'state/providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Init order: storage first (providers read it synchronously),
+  // then the watch bridge, then the app with both injected via overrides.
   final repo = AppRepository();
   await repo.init();
   final watch = WatchService()..init();
@@ -52,6 +54,8 @@ class _MiyaBabyAppState extends ConsumerState<MiyaBabyApp> {
     });
   }
 
+  // Same shape as EventsNotifier._snapshotPayload, rebuilt here because the
+  // notifier's version is private and this runs before any event mutation.
   Map<String, dynamic> _initialSnapshot() {
     final events = ref.read(eventsProvider);
     ActivityEvent? lastOf(EventType t) {
@@ -95,6 +99,8 @@ class _MiyaBabyAppState extends ConsumerState<MiyaBabyApp> {
   }
 }
 
+/// Bottom-tab shell. IndexedStack keeps each tab's scroll position and
+/// state alive while switching.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 

@@ -75,6 +75,8 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Bars are normalized against the week's max so the tallest day fills
+    // the card; the floor keeps zero/low days as a visible sliver.
     final maxV = values.fold<double>(0, (m, v) => v > m ? v : m);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

@@ -56,6 +56,7 @@ class HistoryScreen extends ConsumerWidget {
     );
   }
 
+  /// "Today"/"Yesterday" for recent days, formatted date otherwise.
   String _dayLabel(DateTime day) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
