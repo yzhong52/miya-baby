@@ -5,6 +5,7 @@
 /// layer can stay a simple JSON map.
 library;
 
+/// The kinds of activity Miya Baby can log.
 enum EventType { feeding, diaper, sleep, growth, note }
 
 extension EventTypeX on EventType {
@@ -34,6 +35,7 @@ extension FeedKindX on FeedKind {
       FeedKind.values.firstWhere((e) => e.name == name);
 }
 
+/// What was in the diaper.
 enum DiaperKind { wet, dirty, mixed }
 
 extension DiaperKindX on DiaperKind {
@@ -127,6 +129,7 @@ class ActivityEvent {
             return 'Nursing · ${side[0].toUpperCase()}${side.substring(1)} · $mins';
           case FeedKind.bottle:
             final ml = (data['amountMl'] as num?)?.toDouble() ?? 0;
+            // 1 US fluid ounce = 29.5735 ml.
             final amt = metric
                 ? '${ml.toStringAsFixed(0)} ml'
                 : '${(ml / 29.5735).toStringAsFixed(1)} oz';
@@ -149,11 +152,13 @@ class ActivityEvent {
         final h = (data['heightCm'] as num?)?.toDouble();
         final hc = (data['headCm'] as num?)?.toDouble();
         if (w != null) {
+          // 1 kg = 2.20462 lb.
           parts.add(metric
               ? '${w.toStringAsFixed(2)} kg'
               : '${(w * 2.20462).toStringAsFixed(1)} lb');
         }
         if (h != null) {
+          // 1 inch = 2.54 cm.
           parts.add(metric
               ? '${h.toStringAsFixed(1)} cm'
               : '${(h / 2.54).toStringAsFixed(1)} in');

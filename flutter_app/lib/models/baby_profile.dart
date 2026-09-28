@@ -1,10 +1,20 @@
 /// Baby profile model.
+///
+/// Persisted in the `settings` Hive box. Drives the home-screen greeting,
+/// the age display, and metric/imperial units across the app.
 library;
 
 class BabyProfile {
+  /// Display name shown on the home screen.
   final String name;
+
+  /// Birth date; null until set in Settings. Powers [ageString].
   final DateTime? birthDate;
+
+  /// Local path of a profile photo, if the user picks one.
   final String? photoPath;
+
+  /// True = metric (ml, kg, cm); false = imperial (oz, lb, in).
   final bool metricUnits;
 
   const BabyProfile({
@@ -20,6 +30,8 @@ class BabyProfile {
     final ref = now ?? DateTime.now();
     var months =
         (ref.year - birthDate!.year) * 12 + ref.month - birthDate!.month;
+    // The current month only counts once its day-of-month has passed the
+    // birth day (e.g. born on the 20th, today is the 10th → not yet).
     if (ref.day < birthDate!.day) months -= 1;
     if (months < 0) return '';
     if (months < 1) {

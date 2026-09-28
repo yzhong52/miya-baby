@@ -1,4 +1,8 @@
 /// Riverpod state for Miya Baby.
+///
+/// The two base providers below are overridden in main() with real
+/// instances; the [UnimplementedError] makes a missing override fail fast
+/// instead of silently running with a dummy.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +25,7 @@ final watchServiceProvider = Provider<WatchService>((ref) {
 
 // ------------------------------------------------------------------ profile
 
+/// Holds the baby profile; every update is persisted to disk.
 class ProfileNotifier extends StateNotifier<BabyProfile> {
   final AppRepository _repo;
   ProfileNotifier(this._repo) : super(_repo.getProfile());
@@ -38,6 +43,8 @@ final profileProvider =
 
 // ------------------------------------------------------------------- events
 
+/// Owns the event list: every mutation is persisted and pushes a fresh
+/// snapshot to the watch.
 class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
   final AppRepository _repo;
   final WatchService _watch;
@@ -45,6 +52,8 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
   EventsNotifier(this._repo, this._watch) : super(_repo.getAllEvents());
 
   void _refresh() => state = _repo.getAllEvents();
+
+  /// Add an event: persist, refresh state, and notify the watch.
 
   Future<ActivityEvent> add(ActivityEvent event) async {
     await _repo.saveEvent(event);
@@ -77,6 +86,7 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
       type: type,
       startTime: now,
       endTime: null,
+      // 'active' flags a running timer; see ActivityEvent.isActive.
       data: {...data, 'active': true},
       note: note,
       createdAt: now,
@@ -96,6 +106,7 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     return stopped;
   }
 
+  /// The running timer of [type], if any.
   ActivityEvent? activeTimer(EventType type) {
     for (final e in state) {
       if (e.type == type && e.isActive) return e;
@@ -122,6 +133,8 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     ));
   }
 
+  /// Snapshot the watch renders: latest finished events of each kind,
+  /// plus the start times of any running timers.
   Map<String, dynamic> _snapshotPayload() {
     ActivityEvent? lastOf(EventType t) {
       for (final e in state) {
