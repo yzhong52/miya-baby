@@ -19,8 +19,10 @@ final class WatchBridge: NSObject {
     static let channelName = "miya_baby/watch"
 
     private var channel: FlutterMethodChannel?
+    /// The shared WCSession; nil where WatchConnectivity isn't supported.
     private var session: WCSession? { WCSession.isSupported() ? WCSession.default : nil }
 
+    /// Wire up the Dart method channel and activate the watch session.
     func attach(to messenger: FlutterBinaryMessenger) {
         channel = FlutterMethodChannel(
             name: Self.channelName,

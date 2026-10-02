@@ -19,6 +19,8 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(session.nursingActiveSince == nil ? .pink : .red)
+                // Starting a timer needs a live phone; stopping an active one
+                // stays enabled offline (the stop is queued and syncs later).
                 .disabled(!session.phoneReachable && session.nursingActiveSince == nil)
 
                 Button {
@@ -106,10 +108,12 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // Refresh from the phone's latest snapshot whenever the view appears.
             session.requestSnapshot()
         }
     }
 
+    /// Latest feed/diaper/sleep plus any running timers.
     private var statusCard: some View {
         VStack(alignment: .leading, spacing: 4) {
             statusRow(icon: "cup.and.saucer", text: session.lastFeedText)
