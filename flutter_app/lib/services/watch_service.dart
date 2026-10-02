@@ -16,6 +16,10 @@ class WatchService {
 
   WatchActionHandler? onWatchMessage;
 
+  /// Start listening for messages from the native watch bridge.
+  ///
+  /// Installed once at startup; every `watchMessage` from iOS is forwarded
+  /// to [onWatchMessage].
   void init() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'watchMessage') {
@@ -76,6 +80,7 @@ class WatchService {
             type: EventType.feeding,
             data: {
               'feedKind': FeedKind.bottle.name,
+              // Fall back to a typical 120 ml bottle when the watch omits it.
               'amountMl': (msg['amountMl'] as num?)?.toDouble() ?? 120.0,
             },
           );
@@ -85,6 +90,7 @@ class WatchService {
             type: EventType.feeding,
             data: {
               'feedKind': FeedKind.nursing.name,
+              // Default to the left side when the watch omits it.
               'side': (msg['side'] as String?) ?? 'left',
             },
           );

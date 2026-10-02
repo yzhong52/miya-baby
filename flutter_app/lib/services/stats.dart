@@ -29,6 +29,7 @@ Map<DateTime, DayStats> computeDayStats(
   final stats = <DateTime, DayStats>{for (final d in days) d: DayStats()};
 
   for (final e in events) {
+    // Bucket by local calendar day (midnight-normalized).
     final day = DateTime(e.startTime.year, e.startTime.month, e.startTime.day);
     final s = stats[day];
     if (s == null) continue;
@@ -48,6 +49,7 @@ Map<DateTime, DayStats> computeDayStats(
         s.diapers++;
       case EventType.growth:
       case EventType.note:
+        // Growth entries and notes don't contribute to daily totals.
         break;
     }
   }

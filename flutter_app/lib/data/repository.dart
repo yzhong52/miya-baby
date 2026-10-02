@@ -25,6 +25,9 @@ class AppRepository {
 
   // ---------------------------------------------------------------- events
 
+  /// All events, newest first for the timeline/history views.
+  ///
+  /// Corrupt entries are skipped rather than crashing the read.
   List<ActivityEvent> getAllEvents() {
     final list = <ActivityEvent>[];
     for (final key in _events.keys) {
@@ -60,6 +63,7 @@ class AppRepository {
 
   // ---------------------------------------------------------------- profile
 
+  /// The saved profile, or defaults when nothing (or corrupt data) is stored.
   BabyProfile getProfile() {
     final raw = _settings.get(_profileKey);
     if (raw is Map) {
