@@ -139,6 +139,10 @@ class WatchService {
   /// * `stopNursing`
   /// * `startSleep` / `stopSleep`
   /// * `requestSnapshot`
+  ///
+  /// Every action may carry `at`, the ISO 8601 time it was tapped on the
+  /// watch. Actions queued while the phone was unreachable can arrive much
+  /// later, so `at` (not arrival time) is used as the event / timer time.
   static WatchActionHandler buildHandler({
     required Future<ActivityEvent> Function({
       required EventType type,
@@ -150,11 +154,14 @@ class WatchService {
       required EventType type,
       Map<String, dynamic> data,
       String? note,
+      DateTime? at,
     }) startTimer,
-    required Future<ActivityEvent?> Function(EventType type) stopTimer,
+    required Future<ActivityEvent?> Function(EventType type, {DateTime? at})
+        stopTimer,
   }) {
     return (msg) async {
       final action = msg['action'] as String?;
+      final at = tappedAt(msg['at']);
       switch (action) {
         case 'logDiaper':
           await logInstant(
@@ -163,6 +170,7 @@ class WatchService {
               'diaperKind':
                   (msg['diaperKind'] as String?) ?? DiaperKind.wet.name,
             },
+            at: at,
           );
           break;
         case 'logBottle':
@@ -173,6 +181,7 @@ class WatchService {
               // Fall back to a typical 120 ml bottle when the watch omits it.
               'amountMl': (msg['amountMl'] as num?)?.toDouble() ?? 120.0,
             },
+            at: at,
           );
           break;
         case 'startNursing':
@@ -183,21 +192,34 @@ class WatchService {
               // Default to the left side when the watch omits it.
               'side': (msg['side'] as String?) ?? 'left',
             },
+            at: at,
           );
           break;
         case 'stopNursing':
-          await stopTimer(EventType.feeding);
+          await stopTimer(EventType.feeding, at: at);
           break;
         case 'startSleep':
-          await startTimer(type: EventType.sleep);
+          await startTimer(type: EventType.sleep, at: at);
           break;
         case 'stopSleep':
-          await stopTimer(EventType.sleep);
+          await stopTimer(EventType.sleep, at: at);
           break;
         case 'requestSnapshot':
           // Snapshot is pushed after every mutation anyway.
           break;
       }
     };
+  }
+
+  /// Parse the watch's `at` timestamp as local time. Missing or malformed
+  /// values give null (use "now"); a time in the future, from clock skew
+  /// between watch and phone, is clamped to now.
+  @visibleForTesting
+  static DateTime? tappedAt(Object? value) {
+    if (value is! String) return null;
+    final parsed = DateTime.tryParse(value)?.toLocal();
+    if (parsed == null) return null;
+    final now = DateTime.now();
+    return parsed.isAfter(now) ? now : parsed;
   }
 }

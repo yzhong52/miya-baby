@@ -96,6 +96,29 @@ void main() {
       expect(watch.snapshots, 2);
     });
 
+    test('startTimer and stopTimer honor an explicit time', () async {
+      final notifier = container.read(eventsProvider.notifier);
+      final start = DateTime(2026, 10, 3, 2, 0);
+      final end = DateTime(2026, 10, 3, 2, 40);
+      await notifier.startTimer(type: EventType.feeding, at: start);
+      expect(notifier.activeTimer(EventType.feeding)!.startTime, start);
+
+      final stopped = await notifier.stopTimer(EventType.feeding, at: end);
+      expect(stopped!.startTime, start);
+      expect(stopped.endTime, end);
+      expect(stopped.duration, const Duration(minutes: 40));
+    });
+
+    test('stopTimer clamps a time before the start to the start', () async {
+      final notifier = container.read(eventsProvider.notifier);
+      final start = DateTime(2026, 10, 3, 2, 0);
+      await notifier.startTimer(type: EventType.sleep, at: start);
+      final stopped = await notifier.stopTimer(EventType.sleep,
+          at: start.subtract(const Duration(minutes: 5)));
+      expect(stopped!.endTime, start);
+      expect(stopped.duration, Duration.zero);
+    });
+
     test('stopTimer returns null when no active timer', () async {
       final notifier = container.read(eventsProvider.notifier);
       expect(await notifier.stopTimer(EventType.feeding), isNull);

@@ -1,7 +1,8 @@
 /// WCSession manager for the watch app.
 ///
-/// - Sends log actions to the iPhone via `sendMessage` (phone is source
-///   of truth; all persistence happens there).
+/// - Sends log actions to the iPhone via `sendMessage`, or `transferUserInfo`
+///   when it isn't reachable (phone is source of truth; all persistence
+///   happens there). Each action carries `at`, the time it was tapped.
 /// - Receives status snapshots via `updateApplicationContext` from the
 ///   phone (last feed/diaper/sleep + active timers).
 import Combine
@@ -58,6 +59,10 @@ final class WatchSessionManager: NSObject, ObservableObject {
     }
 
     private func send(_ message: [String: Any]) {
+        // Stamp the tap time: a message queued via transferUserInfo may reach
+        // the phone much later, and the phone logs it at `at`, not on arrival.
+        var message = message
+        message["at"] = Self.isoFractional.string(from: Date())
         let session = WCSession.default
         guard session.activationState == .activated else {
             lastError = "Watch session not active"
