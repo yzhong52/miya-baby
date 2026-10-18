@@ -5,6 +5,9 @@
 /// Dart handles them (log actions) and pushes snapshots back to the watch.
 library;
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../models/activity_event.dart';
@@ -14,19 +17,78 @@ typedef WatchActionHandler = Future<void> Function(Map<String, dynamic> msg);
 class WatchService {
   static const _channel = MethodChannel('miya_baby/watch');
 
-  WatchActionHandler? onWatchMessage;
+  WatchActionHandler? _onWatchMessage;
+  final _pending = <(Map<String, dynamic>, Completer<void>)>[];
+  bool _draining = false;
+
+  WatchActionHandler? get onWatchMessage => _onWatchMessage;
+
+  /// Handler for watch actions. Messages that arrived before it was set
+  /// are queued and replayed, in order, as soon as it is.
+  set onWatchMessage(WatchActionHandler? handler) {
+    _onWatchMessage = handler;
+    _drain();
+  }
 
   /// Start listening for messages from the native watch bridge.
   ///
   /// Installed once at startup; every `watchMessage` from iOS is forwarded
-  /// to [onWatchMessage].
+  /// to [onWatchMessage]. Call [markReady] once that handler is set.
   void init() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'watchMessage') {
-        final args = Map<String, dynamic>.from(call.arguments as Map);
-        await onWatchMessage?.call(args);
+        await receive(Map<String, dynamic>.from(call.arguments as Map));
       }
     });
+  }
+
+  /// Tell the native bridge Dart can take messages, so it flushes anything
+  /// it buffered while Dart was starting (e.g. a background launch to
+  /// deliver queued `transferUserInfo` actions).
+  Future<void> markReady() async {
+    try {
+      await _channel.invokeMethod('ready');
+    } on PlatformException {
+      // Bridge unavailable — nothing was buffered.
+    } on MissingPluginException {
+      // No native bridge (e.g. Android) — nothing was buffered.
+    }
+  }
+
+  /// Queue [msg] and process it once [onWatchMessage] is set. Messages are
+  /// handled one at a time, in arrival order; the returned future completes
+  /// when this message has been handled.
+  @visibleForTesting
+  Future<void> receive(Map<String, dynamic> msg) {
+    final done = Completer<void>();
+    _pending.add((msg, done));
+    _drain();
+    return done.future;
+  }
+
+  Future<void> _drain() async {
+    if (_draining) return; // The running loop will pick up new messages.
+    _draining = true;
+    try {
+      while (_onWatchMessage != null && _pending.isNotEmpty) {
+        final (msg, done) = _pending.removeAt(0);
+        try {
+          await _onWatchMessage!(msg);
+        } catch (e, st) {
+          // Report and keep going so one bad message can't stall the queue.
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'watch_service',
+            context: ErrorDescription('handling watch message $msg'),
+          ));
+        } finally {
+          done.complete();
+        }
+      }
+    } finally {
+      _draining = false;
+    }
   }
 
   /// Push a status snapshot to the watch via updateApplicationContext.

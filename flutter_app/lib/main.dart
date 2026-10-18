@@ -46,6 +46,8 @@ class _MiyaBabyAppState extends ConsumerState<MiyaBabyApp> {
         startTimer: events.startTimer,
         stopTimer: events.stopTimer,
       );
+      // Only now can Dart act on watch messages; let iOS flush its buffer.
+      watch.markReady();
       // Push an initial snapshot so the watch isn't empty.
       events.pushSnapshot();
     });
