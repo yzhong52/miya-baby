@@ -68,8 +68,9 @@ class ActivityEvent {
     required this.createdAt,
   });
 
-  /// An event with an endTime in the future (or null endTime + [isActive])
-  /// represents a running timer (nursing / sleep).
+  /// Whether this is a running timer (nursing / sleep): no [endTime] yet
+  /// and `data['active'] == true`. Instant events have endTime == startTime;
+  /// a stopped timer has its endTime set and `active` flipped to false.
   bool get isActive => endTime == null && data['active'] == true;
 
   Duration? get duration =>
