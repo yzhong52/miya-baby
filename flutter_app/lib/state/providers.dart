@@ -58,20 +58,20 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
   Future<ActivityEvent> add(ActivityEvent event) async {
     await _repo.saveEvent(event);
     _refresh();
-    _watch.pushSnapshot(_snapshotPayload());
+    pushSnapshot();
     return event;
   }
 
   Future<void> update(ActivityEvent event) async {
     await _repo.saveEvent(event);
     _refresh();
-    _watch.pushSnapshot(_snapshotPayload());
+    pushSnapshot();
   }
 
   Future<void> remove(String id) async {
     await _repo.deleteEvent(id);
     _refresh();
-    _watch.pushSnapshot(_snapshotPayload());
+    pushSnapshot();
   }
 
   /// Start a timer event (nursing or sleep). Returns the created event.
@@ -135,9 +135,12 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     ));
   }
 
+  /// Send the current [snapshotPayload] to the watch.
+  Future<void> pushSnapshot() => _watch.pushSnapshot(snapshotPayload());
+
   /// Snapshot the watch renders: latest finished events of each kind,
   /// plus the start times of any running timers.
-  Map<String, dynamic> _snapshotPayload() {
+  Map<String, dynamic> snapshotPayload() {
     ActivityEvent? lastOf(EventType t) {
       for (final e in state) {
         if (e.type == t && !e.isActive) return e;
