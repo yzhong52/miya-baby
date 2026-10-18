@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-import 'data/repository.dart';
+import 'data/hive_stores.dart';
 import 'screens/growth_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/home_screen.dart';
@@ -12,13 +13,16 @@ import 'state/providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final repo = AppRepository();
-  await repo.init();
+  await Hive.initFlutter();
+  final events = HiveEventStore(await Hive.openBox(HiveEventStore.boxName));
+  final profile =
+      HiveProfileStore(await Hive.openBox(HiveProfileStore.boxName));
   final watch = WatchService()..init();
   runApp(
     ProviderScope(
       overrides: [
-        repositoryProvider.overrideWithValue(repo),
+        eventStoreProvider.overrideWithValue(events),
+        profileStoreProvider.overrideWithValue(profile),
         watchServiceProvider.overrideWithValue(watch),
       ],
       child: const MiyaBabyApp(),

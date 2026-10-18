@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../data/export.dart';
 import '../state/providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -16,7 +17,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     final profileNotifier = ref.read(profileProvider.notifier);
-    final repo = ref.read(repositoryProvider);
 
     Future<void> editName() async {
       final controller = TextEditingController(text: profile.name);
@@ -57,7 +57,7 @@ class SettingsScreen extends ConsumerWidget {
     }
 
     Future<void> exportData() async {
-      final json = repo.exportJson(profile);
+      final json = exportJson(profile, ref.read(eventsProvider));
       final text = const JsonEncoder.withIndent('  ').convert(json);
       await Share.share(text, subject: 'Miya Baby export');
     }

@@ -1,7 +1,8 @@
 /// Baby profile model.
 ///
-/// Persisted in the `settings` Hive box. Drives the home-screen greeting,
-/// the age display, and metric/imperial units across the app.
+/// Persisted through a `ProfileStore` (`lib/data/stores.dart`). Drives the
+/// home-screen greeting, the age display, and metric/imperial units across
+/// the app.
 library;
 
 class BabyProfile {

@@ -1,77 +1,132 @@
 /// Riverpod state for Miya Baby.
 ///
-/// The two base providers below are overridden in main() with real
-/// instances; the [UnimplementedError] makes a missing override fail fast
-/// instead of silently running with a dummy.
+/// The base providers below are overridden in main() with real instances;
+/// the [UnimplementedError] makes a missing override fail fast instead of
+/// silently running with a dummy.
 library;
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../data/repository.dart';
+import '../data/stores.dart';
 import '../models/activity_event.dart';
 import '../models/baby_profile.dart';
 import '../services/watch_service.dart';
 
 const _uuid = Uuid();
 
-final repositoryProvider = Provider<AppRepository>((ref) {
-  throw UnimplementedError('repositoryProvider must be overridden at startup');
+final eventStoreProvider = Provider<EventStore>((ref) {
+  throw UnimplementedError('eventStoreProvider must be overridden at startup');
+});
+
+final profileStoreProvider = Provider<ProfileStore>((ref) {
+  throw UnimplementedError(
+      'profileStoreProvider must be overridden at startup');
 });
 
 final watchServiceProvider = Provider<WatchService>((ref) {
   throw UnimplementedError('watchServiceProvider must be overridden');
 });
 
+/// Start a store write without waiting for it, and report it if it fails.
+///
+/// Notifiers update their own state first, so the UI never waits on the
+/// store; see [EventStore.save] for why waiting could hang offline.
+void _write(Future<void> write, String what) {
+  write.catchError((Object e, StackTrace st) {
+    FlutterError.reportError(FlutterErrorDetails(
+      exception: e,
+      stack: st,
+      library: 'providers',
+      context: ErrorDescription(what),
+    ));
+  });
+}
+
 // ------------------------------------------------------------------ profile
 
-/// Holds the baby profile; every update is persisted to disk.
+/// Holds the baby profile, kept in sync with the [ProfileStore].
 class ProfileNotifier extends StateNotifier<BabyProfile> {
-  final AppRepository _repo;
-  ProfileNotifier(this._repo) : super(_repo.getProfile());
+  final ProfileStore _store;
+  late final StreamSubscription<BabyProfile> _sub;
+
+  /// Starts on the default profile until the store's first emission.
+  ProfileNotifier(this._store) : super(const BabyProfile()) {
+    _sub = _store.watchProfile().listen((p) => state = p);
+  }
 
   Future<void> update(BabyProfile profile) async {
     state = profile;
-    await _repo.saveProfile(profile);
+    _write(_store.save(profile), 'saving the profile');
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }
 
 final profileProvider =
     StateNotifierProvider<ProfileNotifier, BabyProfile>((ref) {
-  return ProfileNotifier(ref.watch(repositoryProvider));
+  return ProfileNotifier(ref.watch(profileStoreProvider));
 });
 
 // ------------------------------------------------------------------- events
 
-/// Owns the event list: every mutation is persisted and pushes a fresh
-/// snapshot to the watch.
+/// Owns the event list, kept in sync with the [EventStore]. Every state
+/// change, local or from the store, pushes a fresh snapshot to the watch.
 class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
-  final AppRepository _repo;
+  final EventStore _store;
   final WatchService _watch;
+  late final StreamSubscription<List<ActivityEvent>> _sub;
 
-  EventsNotifier(this._repo, this._watch) : super(_repo.getAllEvents());
+  /// Starts empty until the store's first emission.
+  EventsNotifier(this._store, this._watch) : super(const []) {
+    _sub = _store.watchEvents().listen(_set);
+  }
 
-  void _refresh() => state = _repo.getAllEvents();
-
-  /// Add an event: persist, refresh state, and notify the watch.
-
-  Future<ActivityEvent> add(ActivityEvent event) async {
-    await _repo.saveEvent(event);
-    _refresh();
+  void _set(List<ActivityEvent> events) {
+    state = events;
     pushSnapshot();
+  }
+
+  /// Put [event] into state right away (newest first), ahead of the store.
+  void _upsert(ActivityEvent event) {
+    _set([
+      for (final e in state)
+        if (e.id != event.id) e,
+      event,
+    ]..sort((a, b) => b.startTime.compareTo(a.startTime)));
+  }
+
+  /// Add an event: update state, notify the watch, and save it.
+  Future<ActivityEvent> add(ActivityEvent event) async {
+    _upsert(event);
+    _write(_store.save(event), 'saving event ${event.id}');
     return event;
   }
 
   Future<void> update(ActivityEvent event) async {
-    await _repo.saveEvent(event);
-    _refresh();
-    pushSnapshot();
+    _upsert(event);
+    _write(_store.save(event), 'saving event ${event.id}');
   }
 
   Future<void> remove(String id) async {
-    await _repo.deleteEvent(id);
-    _refresh();
-    pushSnapshot();
+    _set([
+      for (final e in state)
+        if (e.id != id) e,
+    ]);
+    _write(_store.delete(id), 'deleting event $id');
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 
   /// Start a timer event (nursing or sleep), started [at] (default now).
@@ -184,7 +239,7 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
 final eventsProvider =
     StateNotifierProvider<EventsNotifier, List<ActivityEvent>>((ref) {
   return EventsNotifier(
-    ref.watch(repositoryProvider),
+    ref.watch(eventStoreProvider),
     ref.watch(watchServiceProvider),
   );
 });
