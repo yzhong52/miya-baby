@@ -98,16 +98,18 @@ class ActivityEvent {
       );
 
   /// Copy with the given fields replaced. Passing null keeps the current
-  /// value, so use [clearEndTime] / [clearNote] to set those back to null.
+  /// value, so the two nullable fields have explicit flags:
+  /// * [clearEndTime]: set [endTime] back to null (a running timer again).
+  /// * [clearNote]: set [note], the free-text note, back to null.
   ActivityEvent copyWith({
     String? id,
     EventType? type,
     DateTime? startTime,
     DateTime? endTime,
-    bool clearEndTime = false,
+    required bool clearEndTime,
     Map<String, dynamic>? data,
     String? note,
-    bool clearNote = false,
+    required bool clearNote,
     DateTime? createdAt,
   }) {
     assert(!(clearEndTime && endTime != null),

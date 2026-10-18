@@ -100,6 +100,8 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     final event = active.first;
     final stopped = event.copyWith(
       endTime: DateTime.now(),
+      clearEndTime: false,
+      clearNote: false,
       data: {...event.data, 'active': false},
     );
     await update(stopped);
