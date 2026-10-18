@@ -97,24 +97,35 @@ class ActivityEvent {
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
 
+  /// Copy with the given fields replaced. Passing null keeps the current
+  /// value, so the two nullable fields have explicit flags:
+  /// * [clearEndTime]: set [endTime] back to null (a running timer again).
+  /// * [clearNote]: set [note], the free-text note, back to null.
   ActivityEvent copyWith({
     String? id,
     EventType? type,
     DateTime? startTime,
     DateTime? endTime,
+    required bool clearEndTime,
     Map<String, dynamic>? data,
     String? note,
+    required bool clearNote,
     DateTime? createdAt,
-  }) =>
-      ActivityEvent(
-        id: id ?? this.id,
-        type: type ?? this.type,
-        startTime: startTime ?? this.startTime,
-        endTime: endTime ?? this.endTime,
-        data: data ?? this.data,
-        note: note ?? this.note,
-        createdAt: createdAt ?? this.createdAt,
-      );
+  }) {
+    assert(!(clearEndTime && endTime != null),
+        'Pass either endTime or clearEndTime, not both');
+    assert(!(clearNote && note != null),
+        'Pass either note or clearNote, not both');
+    return ActivityEvent(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      startTime: startTime ?? this.startTime,
+      endTime: clearEndTime ? null : endTime ?? this.endTime,
+      data: data ?? this.data,
+      note: clearNote ? null : note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 
   /// Human-readable one-line summary, e.g. "Nursing · Left · 12 min".
   String summary({bool metric = true}) {

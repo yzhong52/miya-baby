@@ -128,11 +128,37 @@ void main() {
   group('copyWith', () {
     test('replaces only provided fields', () {
       final e = _event(note: 'old');
-      final c = e.copyWith(note: 'new', data: {'x': 1});
+      final c = e.copyWith(
+        note: 'new',
+        data: {'x': 1},
+        clearEndTime: false,
+        clearNote: false,
+      );
       expect(c.note, 'new');
       expect(c.data, {'x': 1});
       expect(c.id, e.id);
       expect(c.type, e.type);
+    });
+
+    test('null arguments keep nullable fields', () {
+      final end = DateTime(2026, 1, 1, 10);
+      final e = _event(end: end, note: 'keep');
+      final c = e.copyWith(
+        endTime: null,
+        note: null,
+        clearEndTime: false,
+        clearNote: false,
+      );
+      expect(c.endTime, end);
+      expect(c.note, 'keep');
+    });
+
+    test('clearEndTime and clearNote set fields back to null', () {
+      final e = _event(end: DateTime(2026, 1, 1, 10), note: 'old');
+      final c = e.copyWith(clearEndTime: true, clearNote: true);
+      expect(c.endTime, isNull);
+      expect(c.note, isNull);
+      expect(c.id, e.id);
     });
   });
 }
