@@ -74,17 +74,19 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     pushSnapshot();
   }
 
-  /// Start a timer event (nursing or sleep). Returns the created event.
+  /// Start a timer event (nursing or sleep), started [at] (default now).
+  /// Returns the created event.
   Future<ActivityEvent> startTimer({
     required EventType type,
     Map<String, dynamic> data = const {},
     String? note,
+    DateTime? at,
   }) {
     final now = DateTime.now();
     return add(ActivityEvent(
       id: _uuid.v4(),
       type: type,
-      startTime: now,
+      startTime: at ?? now,
       endTime: null,
       // 'active' flags a running timer; see ActivityEvent.isActive.
       data: {...data, 'active': true},
@@ -93,13 +95,15 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     ));
   }
 
-  /// Stop the most recent active timer of [type].
-  Future<ActivityEvent?> stopTimer(EventType type) async {
+  /// Stop the most recent active timer of [type] [at] (default now). An
+  /// [at] before the timer's start is clamped to the start.
+  Future<ActivityEvent?> stopTimer(EventType type, {DateTime? at}) async {
     final active = state.where((e) => e.type == type && e.isActive);
     if (active.isEmpty) return null;
     final event = active.first;
+    final end = at ?? DateTime.now();
     final stopped = event.copyWith(
-      endTime: DateTime.now(),
+      endTime: end.isBefore(event.startTime) ? event.startTime : end,
       data: {...event.data, 'active': false},
     );
     await update(stopped);
