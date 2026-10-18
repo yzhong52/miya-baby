@@ -119,6 +119,35 @@ void main() {
       expect(events[0].startTime.hour, 11);
       expect(events[1].startTime.hour, 9);
     });
+
+    test('snapshotPayload has latest finished events and running timers',
+        () async {
+      final notifier = container.read(eventsProvider.notifier);
+      await notifier.logInstant(
+          type: EventType.diaper,
+          data: {'diaperKind': 'dirty'},
+          at: DateTime(2026, 9, 27, 9, 0));
+      await notifier.logInstant(
+          type: EventType.diaper,
+          data: {'diaperKind': 'wet'},
+          at: DateTime(2026, 9, 27, 11, 0));
+      await notifier.startTimer(type: EventType.sleep);
+
+      final snap = notifier.snapshotPayload();
+      expect((snap['lastDiaper'] as Map)['data'], {'diaperKind': 'wet'});
+      expect(snap['lastFeed'], isNull);
+      // The running sleep timer isn't "last sleep"; it's activeSleepStart.
+      expect(snap['lastSleep'], isNull);
+      expect(snap['activeSleepStart'], isA<String>());
+      expect(snap['activeNursingStart'], isNull);
+      expect(snap['generatedAt'], isA<String>());
+    });
+
+    test('pushSnapshot sends to the watch', () async {
+      final notifier = container.read(eventsProvider.notifier);
+      await notifier.pushSnapshot();
+      expect(watch.snapshots, 1);
+    });
   });
 
   group('eventsForDayProvider', () {
