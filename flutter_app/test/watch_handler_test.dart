@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miya_baby/models/activity_event.dart';
 import 'package:miya_baby/services/watch_service.dart';
@@ -83,6 +84,54 @@ void main() {
       expect(logged, isEmpty);
       expect(timersStarted, isEmpty);
       expect(timersStopped, isEmpty);
+    });
+  });
+  group('WatchService message queue', () {
+    test('messages before the handler is set are replayed in order', () async {
+      final watch = WatchService();
+      final handled = <String>[];
+      final a = watch.receive({'action': 'a'});
+      final b = watch.receive({'action': 'b'});
+      expect(handled, isEmpty);
+
+      watch.onWatchMessage = (msg) async => handled.add(msg['action']);
+      await Future.wait([a, b]);
+      await watch.receive({'action': 'c'});
+      expect(handled, ['a', 'b', 'c']);
+    });
+
+    test('messages are handled one at a time', () async {
+      final watch = WatchService();
+      final events = <String>[];
+      watch.onWatchMessage = (msg) async {
+        events.add('start ${msg['action']}');
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        events.add('end ${msg['action']}');
+      };
+      await Future.wait([
+        watch.receive({'action': 'a'}),
+        watch.receive({'action': 'b'}),
+      ]);
+      expect(events, ['start a', 'end a', 'start b', 'end b']);
+    });
+
+    test('a failing message does not stall the ones behind it', () async {
+      final watch = WatchService();
+      final handled = <String>[];
+      final errors = <FlutterErrorDetails>[];
+      final oldOnError = FlutterError.onError;
+      FlutterError.onError = errors.add;
+      addTearDown(() => FlutterError.onError = oldOnError);
+
+      watch.receive({'action': 'bad'});
+      watch.receive({'action': 'good'});
+      watch.onWatchMessage = (msg) async {
+        if (msg['action'] == 'bad') throw StateError('boom');
+        handled.add(msg['action']);
+      };
+      await watch.receive({'action': 'after'});
+      expect(handled, ['good', 'after']);
+      expect(errors, hasLength(1));
     });
   });
 }
