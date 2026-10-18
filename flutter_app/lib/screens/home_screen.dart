@@ -77,6 +77,14 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+/// Formats a running timer as `mm:ss`, or `h:mm:ss` once past an hour.
+String formatElapsed(Duration elapsed) {
+  final hh = elapsed.inHours;
+  final mm = (elapsed.inMinutes % 60).toString().padLeft(2, '0');
+  final ss = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
+  return hh > 0 ? '$hh:$mm:$ss' : '$mm:$ss';
+}
+
 class _TimerCard extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -113,11 +121,8 @@ class _TimerCardState extends State<_TimerCard> {
 
   @override
   Widget build(BuildContext context) {
-    final elapsed = DateTime.now().difference(widget.event.startTime);
-    final mm = elapsed.inMinutes.toString().padLeft(2, '0');
-    final ss = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
-    final hh = elapsed.inHours;
-    final timeStr = hh > 0 ? '$hh:$mm:$ss' : '$mm:$ss';
+    final timeStr =
+        formatElapsed(DateTime.now().difference(widget.event.startTime));
 
     return Card(
       color: Theme.of(context).colorScheme.primaryContainer,
