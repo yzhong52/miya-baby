@@ -143,6 +143,32 @@ void main() {
       expect(snap['generatedAt'], isA<String>());
     });
 
+    test('snapshotPayload timestamps are UTC ISO 8601 for the watch', () async {
+      // Swift's ISO8601DateFormatter needs an explicit offset; see #8.
+      final notifier = container.read(eventsProvider.notifier);
+      final at = DateTime(2026, 10, 3, 10, 15, 30, 123, 456); // local
+      await notifier.logInstant(type: EventType.diaper, at: at);
+      await notifier.startTimer(type: EventType.sleep);
+
+      final snap = notifier.snapshotPayload();
+      final diaper = snap['lastDiaper'] as Map<String, dynamic>;
+      final utc = RegExp(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z$');
+      for (final iso in [
+        diaper['startTime'],
+        diaper['endTime'],
+        diaper['createdAt'],
+        snap['activeSleepStart'],
+        snap['generatedAt'],
+      ]) {
+        expect(iso, matches(utc));
+      }
+      // Same instant, just expressed in UTC.
+      expect(
+        DateTime.parse(diaper['startTime'] as String).isAtSameMomentAs(at),
+        isTrue,
+      );
+    });
+
     test('pushSnapshot sends to the watch', () async {
       final notifier = container.read(eventsProvider.notifier);
       await notifier.pushSnapshot();
