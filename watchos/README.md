@@ -54,7 +54,7 @@ Event JSON matches the Dart `ActivityEvent.toJson()` shape
    - Product name: `MiyaBabyWatch`
    - Bundle Identifier: `<iOS-app-bundle-id>.watchkitapp`
    - Make sure the watch target's deployment target matches your watch.
-3. Drag the four Swift files from this folder into the new target
+3. Drag the Swift files from `MiyaBabyWatch/` into the new target
    (check "Copy items if needed", select the watch target only).
 4. Build & run on the watch simulator (or a real watch paired to the
    iPhone running the Flutter app).
