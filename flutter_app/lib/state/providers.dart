@@ -138,6 +138,10 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
 
   /// Snapshot the watch renders: latest finished events of each kind,
   /// plus the start times of any running timers.
+  ///
+  /// All timestamps are UTC ISO 8601 (`...Z`). A local DateTime's
+  /// toIso8601String() has no offset, which Swift's ISO8601DateFormatter
+  /// rejects (see watchos/MiyaBabyWatch/WatchSessionManager.swift).
   Map<String, dynamic> snapshotPayload() {
     ActivityEvent? lastOf(EventType t) {
       for (final e in state) {
@@ -146,15 +150,27 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
       return null;
     }
 
-    String? isoOrNull(ActivityEvent? e) => e?.startTime.toIso8601String();
+    String utcIso(DateTime t) => t.toUtc().toIso8601String();
+
+    Map<String, dynamic>? eventJson(ActivityEvent? e) => e == null
+        ? null
+        : {
+            ...e.toJson(),
+            'startTime': utcIso(e.startTime),
+            'endTime': e.endTime == null ? null : utcIso(e.endTime!),
+            'createdAt': utcIso(e.createdAt),
+          };
+
+    String? startOrNull(ActivityEvent? e) =>
+        e == null ? null : utcIso(e.startTime);
 
     return {
-      'lastFeed': lastOf(EventType.feeding)?.toJson(),
-      'lastDiaper': lastOf(EventType.diaper)?.toJson(),
-      'lastSleep': lastOf(EventType.sleep)?.toJson(),
-      'activeSleepStart': isoOrNull(activeTimer(EventType.sleep)),
-      'activeNursingStart': isoOrNull(activeTimer(EventType.feeding)),
-      'generatedAt': DateTime.now().toIso8601String(),
+      'lastFeed': eventJson(lastOf(EventType.feeding)),
+      'lastDiaper': eventJson(lastOf(EventType.diaper)),
+      'lastSleep': eventJson(lastOf(EventType.sleep)),
+      'activeSleepStart': startOrNull(activeTimer(EventType.sleep)),
+      'activeNursingStart': startOrNull(activeTimer(EventType.feeding)),
+      'generatedAt': utcIso(DateTime.now()),
     };
   }
 }
