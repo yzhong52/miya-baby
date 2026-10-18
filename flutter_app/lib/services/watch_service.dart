@@ -14,11 +14,35 @@ import '../models/activity_event.dart';
 
 typedef WatchActionHandler = Future<void> Function(Map<String, dynamic> msg);
 
+/// Method names on the `miya_baby/watch` channel. These are a contract with
+/// the iOS side and must match `WatchBridge.Method` in
+/// `ios/Runner/WatchBridge.swift`.
+abstract final class WatchMethod {
+  /// iOS -> Dart: a watch action, `{action, ...}`; see
+  /// [WatchService.buildHandler].
+  static const watchMessage = 'watchMessage';
+
+  /// Dart -> iOS: a status snapshot to send to the watch.
+  static const pushSnapshot = 'pushSnapshot';
+
+  /// Dart -> iOS: Dart's handler is wired; flush buffered watch messages.
+  static const ready = 'ready';
+}
+
 class WatchService {
+  /// Must match `WatchBridge.channelName` in `ios/Runner/WatchBridge.swift`.
   static const _channel = MethodChannel('miya_baby/watch');
 
   WatchActionHandler? _onWatchMessage;
+
+  /// Inbox of watch messages not yet handled, oldest first, each with a
+  /// completer that [receive] returns. Messages wait here when they arrive
+  /// before [onWatchMessage] is set (e.g. right after a cold start) or while
+  /// an earlier message is still being handled.
   final _pending = <(Map<String, dynamic>, Completer<void>)>[];
+
+  /// Whether [_drain] is currently working through [_pending]; stops a
+  /// second loop from starting and handling messages concurrently.
   bool _draining = false;
 
   WatchActionHandler? get onWatchMessage => _onWatchMessage;
@@ -36,7 +60,7 @@ class WatchService {
   /// to [onWatchMessage]. Call [markReady] once that handler is set.
   void init() {
     _channel.setMethodCallHandler((call) async {
-      if (call.method == 'watchMessage') {
+      if (call.method == WatchMethod.watchMessage) {
         await receive(Map<String, dynamic>.from(call.arguments as Map));
       }
     });
@@ -47,7 +71,7 @@ class WatchService {
   /// deliver queued `transferUserInfo` actions).
   Future<void> markReady() async {
     try {
-      await _channel.invokeMethod('ready');
+      await _channel.invokeMethod(WatchMethod.ready);
     } on PlatformException {
       // Bridge unavailable — nothing was buffered.
     } on MissingPluginException {
@@ -66,6 +90,10 @@ class WatchService {
     return done.future;
   }
 
+  /// "Drains" the [_pending] inbox: hands each queued watch message to
+  /// [onWatchMessage], one at a time and in arrival order, until the inbox
+  /// is empty. Called whenever a message arrives and when the handler is
+  /// set. Does nothing while no handler is set, so messages stay queued.
   Future<void> _drain() async {
     if (_draining) return; // The running loop will pick up new messages.
     _draining = true;
@@ -94,7 +122,7 @@ class WatchService {
   /// Push a status snapshot to the watch via updateApplicationContext.
   Future<void> pushSnapshot(Map<String, dynamic> payload) async {
     try {
-      await _channel.invokeMethod('pushSnapshot', payload);
+      await _channel.invokeMethod(WatchMethod.pushSnapshot, payload);
     } on PlatformException {
       // Watch bridge unavailable (e.g. Android, or no watch paired) — fine.
     } on MissingPluginException {

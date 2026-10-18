@@ -20,7 +20,19 @@ import UIKit
 import WatchConnectivity
 
 final class WatchBridge: NSObject {
+    /// Must match `WatchService._channel` in lib/services/watch_service.dart.
     static let channelName = "miya_baby/watch"
+
+    /// Method names on the channel. These are a contract with Dart and must
+    /// match `WatchMethod` in lib/services/watch_service.dart.
+    enum Method {
+        /// iOS -> Dart: a watch action, `{action, ...}`.
+        static let watchMessage = "watchMessage"
+        /// Dart -> iOS: a status snapshot to send to the watch.
+        static let pushSnapshot = "pushSnapshot"
+        /// Dart -> iOS: Dart's handler is wired; flush buffered watch messages.
+        static let ready = "ready"
+    }
 
     private var channel: FlutterMethodChannel?
     /// Watch messages received before Dart said `ready`. Main thread only.
@@ -42,7 +54,7 @@ final class WatchBridge: NSObject {
 
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "pushSnapshot":
+        case Method.pushSnapshot:
             // Dart -> Watch: refresh the watch's cached status snapshot.
             // updateApplicationContext queues the latest payload and delivers it
             // when the watch is reachable, so the watch face shows current data
@@ -51,7 +63,7 @@ final class WatchBridge: NSObject {
                 pushSnapshot(payload)
             }
             result(nil)
-        case "ready":
+        case Method.ready:
             // Dart has wired its watch handler: deliver anything buffered.
             dartReady = true
             let queued = pending
@@ -78,7 +90,7 @@ final class WatchBridge: NSObject {
     }
 
     private func forwardToDart(_ message: [String: Any]) {
-        channel?.invokeMethod("watchMessage", arguments: message)
+        channel?.invokeMethod(Method.watchMessage, arguments: message)
     }
 
     private func pushSnapshot(_ payload: [String: Any]) {
