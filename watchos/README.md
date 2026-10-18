@@ -28,6 +28,10 @@ snapshots.
 | `stopSleep`     | —                                    |
 | `requestSnapshot` | —                                  |
 
+Every action also carries `at`: the ISO 8601 UTC time it was tapped. When
+the phone is unreachable the watch queues actions with `transferUserInfo`;
+the phone logs them (and starts/stops timers) at `at`, not on arrival.
+
 The phone replies to every message with `{"ok": true}` and, after each
 mutation, pushes a snapshot to the watch via application context:
 

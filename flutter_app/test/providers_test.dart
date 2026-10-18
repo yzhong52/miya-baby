@@ -96,6 +96,29 @@ void main() {
       expect(watch.snapshots, 2);
     });
 
+    test('startTimer and stopTimer honor an explicit time', () async {
+      final notifier = container.read(eventsProvider.notifier);
+      final start = DateTime(2026, 10, 3, 2, 0);
+      final end = DateTime(2026, 10, 3, 2, 40);
+      await notifier.startTimer(type: EventType.feeding, at: start);
+      expect(notifier.activeTimer(EventType.feeding)!.startTime, start);
+
+      final stopped = await notifier.stopTimer(EventType.feeding, at: end);
+      expect(stopped!.startTime, start);
+      expect(stopped.endTime, end);
+      expect(stopped.duration, const Duration(minutes: 40));
+    });
+
+    test('stopTimer clamps a time before the start to the start', () async {
+      final notifier = container.read(eventsProvider.notifier);
+      final start = DateTime(2026, 10, 3, 2, 0);
+      await notifier.startTimer(type: EventType.sleep, at: start);
+      final stopped = await notifier.stopTimer(EventType.sleep,
+          at: start.subtract(const Duration(minutes: 5)));
+      expect(stopped!.endTime, start);
+      expect(stopped.duration, Duration.zero);
+    });
+
     test('stopTimer returns null when no active timer', () async {
       final notifier = container.read(eventsProvider.notifier);
       expect(await notifier.stopTimer(EventType.feeding), isNull);
@@ -141,6 +164,32 @@ void main() {
       expect(snap['activeSleepStart'], isA<String>());
       expect(snap['activeNursingStart'], isNull);
       expect(snap['generatedAt'], isA<String>());
+    });
+
+    test('snapshotPayload timestamps are UTC ISO 8601 for the watch', () async {
+      // Swift's ISO8601DateFormatter needs an explicit offset; see #8.
+      final notifier = container.read(eventsProvider.notifier);
+      final at = DateTime(2026, 10, 3, 10, 15, 30, 123, 456); // local
+      await notifier.logInstant(type: EventType.diaper, at: at);
+      await notifier.startTimer(type: EventType.sleep);
+
+      final snap = notifier.snapshotPayload();
+      final diaper = snap['lastDiaper'] as Map<String, dynamic>;
+      final utc = RegExp(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z$');
+      for (final iso in [
+        diaper['startTime'],
+        diaper['endTime'],
+        diaper['createdAt'],
+        snap['activeSleepStart'],
+        snap['generatedAt'],
+      ]) {
+        expect(iso, matches(utc));
+      }
+      // Same instant, just expressed in UTC.
+      expect(
+        DateTime.parse(diaper['startTime'] as String).isAtSameMomentAs(at),
+        isTrue,
+      );
     });
 
     test('pushSnapshot sends to the watch', () async {

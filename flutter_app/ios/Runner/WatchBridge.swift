@@ -5,6 +5,10 @@
 ///   via the method channel as `watchMessage`.
 /// - Watch -> iPhone (background): `transferUserInfo` deliveries arrive via
 ///   `didReceiveUserInfo` and are forwarded to Dart as `watchMessage` too.
+/// - Watch messages are buffered until Dart calls `ready` (it has wired its
+///   handler). A queued transfer can launch the app in the background before
+///   Dart is running, and Flutter's own channel buffer keeps only one
+///   message, so without this, actions could be lost on a cold start.
 /// - Dart -> Watch: `pushSnapshot` calls update the application context so
 ///   the watch always has the latest status even when not reachable.
 ///
@@ -16,9 +20,24 @@ import UIKit
 import WatchConnectivity
 
 final class WatchBridge: NSObject {
+    /// Must match `WatchService._channel` in lib/services/watch_service.dart.
     static let channelName = "miya_baby/watch"
 
+    /// Method names on the channel. These are a contract with Dart and must
+    /// match `WatchMethod` in lib/services/watch_service.dart.
+    enum Method {
+        /// iOS -> Dart: a watch action, `{action, ...}`.
+        static let watchMessage = "watchMessage"
+        /// Dart -> iOS: a status snapshot to send to the watch.
+        static let pushSnapshot = "pushSnapshot"
+        /// Dart -> iOS: Dart's handler is wired; flush buffered watch messages.
+        static let ready = "ready"
+    }
+
     private var channel: FlutterMethodChannel?
+    /// Watch messages received before Dart said `ready`. Main thread only.
+    private var pending: [[String: Any]] = []
+    private var dartReady = false
     private var session: WCSession? { WCSession.isSupported() ? WCSession.default : nil }
 
     func attach(to messenger: FlutterBinaryMessenger) {
@@ -35,7 +54,7 @@ final class WatchBridge: NSObject {
 
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "pushSnapshot":
+        case Method.pushSnapshot:
             // Dart -> Watch: refresh the watch's cached status snapshot.
             // updateApplicationContext queues the latest payload and delivers it
             // when the watch is reachable, so the watch face shows current data
@@ -44,9 +63,34 @@ final class WatchBridge: NSObject {
                 pushSnapshot(payload)
             }
             result(nil)
+        case Method.ready:
+            // Dart has wired its watch handler: deliver anything buffered.
+            dartReady = true
+            let queued = pending
+            pending.removeAll()
+            queued.forEach(forwardToDart)
+            result(nil)
         default:
             result(FlutterMethodNotImplemented)
         }
+    }
+
+    /// Forward a watch message to Dart, or buffer it until Dart is ready.
+    /// WCSession delegate callbacks arrive on a background queue, and the
+    /// channel must be used on the main thread, so always hop to main.
+    private func deliver(_ message: [String: Any]) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if self.dartReady {
+                self.forwardToDart(message)
+            } else {
+                self.pending.append(message)
+            }
+        }
+    }
+
+    private func forwardToDart(_ message: [String: Any]) {
+        channel?.invokeMethod(Method.watchMessage, arguments: message)
     }
 
     private func pushSnapshot(_ payload: [String: Any]) {
@@ -77,17 +121,17 @@ extension WatchBridge: WCSessionDelegate {
         didReceiveMessage message: [String: Any],
         replyHandler: @escaping ([String: Any]) -> Void
     ) {
-        channel?.invokeMethod("watchMessage", arguments: message)
+        deliver(message)
         replyHandler(["ok": true])
     }
 
     /// Watch -> phone (background): `transferUserInfo` payloads are queued by
     /// the system and delivered here even if the app was not running.
-    /// Forward to Dart best-effort; there is no reply handler.
+    /// Buffered until Dart is ready; there is no reply handler.
     func session(
         _ session: WCSession,
         didReceiveUserInfo userInfo: [String: Any] = [:]
     ) {
-        channel?.invokeMethod("watchMessage", arguments: userInfo)
+        deliver(userInfo)
     }
 }

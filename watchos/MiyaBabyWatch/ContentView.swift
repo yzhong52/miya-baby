@@ -19,7 +19,6 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(session.nursingActiveSince == nil ? .pink : .red)
-                .disabled(!session.phoneReachable && session.nursingActiveSince == nil)
 
                 Button {
                     session.logBottle(amountMl: 120)

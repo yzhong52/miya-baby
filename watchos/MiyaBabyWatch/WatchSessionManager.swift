@@ -1,7 +1,8 @@
 /// WCSession manager for the watch app.
 ///
-/// - Sends log actions to the iPhone via `sendMessage` (phone is source
-///   of truth; all persistence happens there).
+/// - Sends log actions to the iPhone via `sendMessage`, or `transferUserInfo`
+///   when it isn't reachable (phone is source of truth; all persistence
+///   happens there). Each action carries `at`, the time it was tapped.
 /// - Receives status snapshots via `updateApplicationContext` from the
 ///   phone (last feed/diaper/sleep + active timers).
 import Combine
@@ -58,6 +59,10 @@ final class WatchSessionManager: NSObject, ObservableObject {
     }
 
     private func send(_ message: [String: Any]) {
+        // Stamp the tap time: a message queued via transferUserInfo may reach
+        // the phone much later, and the phone logs it at `at`, not on arrival.
+        var message = message
+        message["at"] = Self.isoFractional.string(from: Date())
         let session = WCSession.default
         guard session.activationState == .activated else {
             lastError = "Watch session not active"
@@ -88,22 +93,28 @@ final class WatchSessionManager: NSObject, ObservableObject {
             if let sleep = context["lastSleep"] as? [String: Any] {
                 self.lastSleepText = Self.describe(sleep)
             }
-            if let iso = context["activeSleepStart"] as? String {
-                self.sleepActiveSince = ISO8601DateFormatter().date(from: iso)
-            } else {
-                self.sleepActiveSince = nil
-            }
-            if let iso = context["activeNursingStart"] as? String {
-                self.nursingActiveSince = ISO8601DateFormatter().date(from: iso)
-            } else {
-                self.nursingActiveSince = nil
-            }
+            self.sleepActiveSince = Self.parseDate(context["activeSleepStart"])
+            self.nursingActiveSince = Self.parseDate(context["activeNursingStart"])
         }
     }
 
+    // The phone sends UTC ISO 8601 from Dart, e.g. "2026-10-03T10:15:30.123456Z".
+    // The default ISO8601DateFormatter rejects fractional seconds, and the
+    // fractional one rejects strings without them, so try both.
+    private static let isoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoPlain = ISO8601DateFormatter()
+
+    static func parseDate(_ value: Any?) -> Date? {
+        guard let iso = value as? String else { return nil }
+        return isoFractional.date(from: iso) ?? isoPlain.date(from: iso)
+    }
+
     private static func describe(_ event: [String: Any]) -> String {
-        guard let iso = event["startTime"] as? String,
-              let date = ISO8601DateFormatter().date(from: iso) else {
+        guard let date = parseDate(event["startTime"]) else {
             return "—"
         }
         let fmt = DateFormatter()

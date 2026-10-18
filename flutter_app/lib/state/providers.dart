@@ -74,17 +74,19 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     pushSnapshot();
   }
 
-  /// Start a timer event (nursing or sleep). Returns the created event.
+  /// Start a timer event (nursing or sleep), started [at] (default now).
+  /// Returns the created event.
   Future<ActivityEvent> startTimer({
     required EventType type,
     Map<String, dynamic> data = const {},
     String? note,
+    DateTime? at,
   }) {
     final now = DateTime.now();
     return add(ActivityEvent(
       id: _uuid.v4(),
       type: type,
-      startTime: now,
+      startTime: at ?? now,
       endTime: null,
       // 'active' flags a running timer; see ActivityEvent.isActive.
       data: {...data, 'active': true},
@@ -93,13 +95,15 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
     ));
   }
 
-  /// Stop the most recent active timer of [type].
-  Future<ActivityEvent?> stopTimer(EventType type) async {
+  /// Stop the most recent active timer of [type] [at] (default now). An
+  /// [at] before the timer's start is clamped to the start.
+  Future<ActivityEvent?> stopTimer(EventType type, {DateTime? at}) async {
     final active = state.where((e) => e.type == type && e.isActive);
     if (active.isEmpty) return null;
     final event = active.first;
+    final end = at ?? DateTime.now();
     final stopped = event.copyWith(
-      endTime: DateTime.now(),
+      endTime: end.isBefore(event.startTime) ? event.startTime : end,
       clearEndTime: false,
       clearNote: false,
       data: {...event.data, 'active': false},
@@ -140,6 +144,10 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
 
   /// Snapshot the watch renders: latest finished events of each kind,
   /// plus the start times of any running timers.
+  ///
+  /// All timestamps are UTC ISO 8601 (`...Z`). A local DateTime's
+  /// toIso8601String() has no offset, which Swift's ISO8601DateFormatter
+  /// rejects (see watchos/MiyaBabyWatch/WatchSessionManager.swift).
   Map<String, dynamic> snapshotPayload() {
     ActivityEvent? lastOf(EventType t) {
       for (final e in state) {
@@ -148,15 +156,27 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
       return null;
     }
 
-    String? isoOrNull(ActivityEvent? e) => e?.startTime.toIso8601String();
+    String utcIso(DateTime t) => t.toUtc().toIso8601String();
+
+    Map<String, dynamic>? eventJson(ActivityEvent? e) => e == null
+        ? null
+        : {
+            ...e.toJson(),
+            'startTime': utcIso(e.startTime),
+            'endTime': e.endTime == null ? null : utcIso(e.endTime!),
+            'createdAt': utcIso(e.createdAt),
+          };
+
+    String? startOrNull(ActivityEvent? e) =>
+        e == null ? null : utcIso(e.startTime);
 
     return {
-      'lastFeed': lastOf(EventType.feeding)?.toJson(),
-      'lastDiaper': lastOf(EventType.diaper)?.toJson(),
-      'lastSleep': lastOf(EventType.sleep)?.toJson(),
-      'activeSleepStart': isoOrNull(activeTimer(EventType.sleep)),
-      'activeNursingStart': isoOrNull(activeTimer(EventType.feeding)),
-      'generatedAt': DateTime.now().toIso8601String(),
+      'lastFeed': eventJson(lastOf(EventType.feeding)),
+      'lastDiaper': eventJson(lastOf(EventType.diaper)),
+      'lastSleep': eventJson(lastOf(EventType.sleep)),
+      'activeSleepStart': startOrNull(activeTimer(EventType.sleep)),
+      'activeNursingStart': startOrNull(activeTimer(EventType.feeding)),
+      'generatedAt': utcIso(DateTime.now()),
     };
   }
 }
