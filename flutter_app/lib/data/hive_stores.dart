@@ -1,5 +1,7 @@
 /// Hive-backed [EventStore] and [ProfileStore], storing JSON on this device.
 ///
+/// A Hive "box" is a named key-value table, saved as one file on disk:
+///
 /// * `events` box: key = event id, value = [ActivityEvent.toJson] map.
 /// * `settings` box: single `profile` key with the baby profile JSON.
 library;
@@ -13,10 +15,16 @@ import '../models/baby_profile.dart';
 import 'stores.dart';
 
 class HiveEventStore implements EventStore {
-  static const boxName = 'events';
+  static const _boxName = 'events';
 
+  /// The `events` box: event id -> [ActivityEvent.toJson] map.
   final Box _box;
-  HiveEventStore(this._box);
+  HiveEventStore._(this._box);
+
+  /// Open the `events` box. Call `Hive.initFlutter()` (or `Hive.init` in
+  /// tests) first.
+  static Future<HiveEventStore> open() async =>
+      HiveEventStore._(await Hive.openBox(_boxName));
 
   @override
   Stream<List<ActivityEvent>> watchEvents() =>
@@ -47,11 +55,17 @@ class HiveEventStore implements EventStore {
 }
 
 class HiveProfileStore implements ProfileStore {
-  static const boxName = 'settings';
+  static const _boxName = 'settings';
   static const _profileKey = 'profile';
 
+  /// The `settings` box; the profile JSON lives under [_profileKey].
   final Box _box;
-  HiveProfileStore(this._box);
+  HiveProfileStore._(this._box);
+
+  /// Open the `settings` box. Call `Hive.initFlutter()` (or `Hive.init` in
+  /// tests) first.
+  static Future<HiveProfileStore> open() async =>
+      HiveProfileStore._(await Hive.openBox(_boxName));
 
   @override
   Stream<BabyProfile> watchProfile() =>

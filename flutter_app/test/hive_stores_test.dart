@@ -32,7 +32,7 @@ void main() {
 
   group('HiveEventStore', () {
     test('emits the current events, newest first, then each change', () async {
-      final store = HiveEventStore(await Hive.openBox(HiveEventStore.boxName));
+      final store = await HiveEventStore.open();
       await store.save(_event('a', DateTime(2026, 10, 1, 9)));
 
       final emitted = <List<String>>[];
@@ -52,10 +52,10 @@ void main() {
     });
 
     test('skips corrupt entries', () async {
-      final box = await Hive.openBox(HiveEventStore.boxName);
+      final store = await HiveEventStore.open();
+      final box = Hive.box('events'); // the box the store just opened
       await box.put('junk', {'type': 'nope'});
       await box.put('text', 'not a map');
-      final store = HiveEventStore(box);
       await store.save(_event('ok', DateTime(2026, 10, 1)));
 
       expect(_ids(await store.watchEvents().first), ['ok']);
@@ -64,8 +64,7 @@ void main() {
 
   group('HiveProfileStore', () {
     test('defaults until saved, then emits the saved profile', () async {
-      final store =
-          HiveProfileStore(await Hive.openBox(HiveProfileStore.boxName));
+      final store = await HiveProfileStore.open();
       final names = <String>[];
       final sub = store.watchProfile().listen((p) => names.add(p.name));
       await pumpEventQueue();

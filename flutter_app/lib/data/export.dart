@@ -1,4 +1,10 @@
-/// JSON export of everything the app tracks, for share/export in Settings.
+/// JSON export of everything the app tracks.
+///
+/// Settings > "Export data (JSON)" turns this into indented text and opens
+/// the system share sheet, so a parent can save it to Files, email it, etc.
+/// It is the only way to get data out of the app: a manual backup today,
+/// and still useful after the move to Firestore for keeping a copy outside
+/// Firebase or moving to another tracker. Nothing is written to disk here.
 library;
 
 import '../models/activity_event.dart';

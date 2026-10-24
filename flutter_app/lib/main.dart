@@ -14,9 +14,8 @@ import 'state/providers.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  final events = HiveEventStore(await Hive.openBox(HiveEventStore.boxName));
-  final profile =
-      HiveProfileStore(await Hive.openBox(HiveProfileStore.boxName));
+  final events = await HiveEventStore.open();
+  final profile = await HiveProfileStore.open();
   final watch = WatchService()..init();
   runApp(
     ProviderScope(
