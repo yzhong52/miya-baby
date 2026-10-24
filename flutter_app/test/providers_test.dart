@@ -1,56 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:miya_baby/data/repository.dart';
 import 'package:miya_baby/models/activity_event.dart';
 import 'package:miya_baby/models/baby_profile.dart';
-import 'package:miya_baby/services/watch_service.dart';
 import 'package:miya_baby/state/providers.dart';
 
-/// In-memory stand-in for [AppRepository] (which needs Hive).
-class FakeRepository extends AppRepository {
-  final _events = <String, ActivityEvent>{};
-  BabyProfile _profile = const BabyProfile();
+import 'fakes.dart';
 
-  @override
-  List<ActivityEvent> getAllEvents() {
-    final list = _events.values.toList()
-      ..sort((a, b) => b.startTime.compareTo(a.startTime));
-    return list;
-  }
-
-  @override
-  Future<void> saveEvent(ActivityEvent event) async {
-    _events[event.id] = event;
-  }
-
-  @override
-  Future<void> deleteEvent(String id) async {
-    _events.remove(id);
-  }
-
-  @override
-  BabyProfile getProfile() => _profile;
-
-  @override
-  Future<void> saveProfile(BabyProfile profile) async {
-    _profile = profile;
-  }
-}
-
-/// WatchService whose pushSnapshot is a no-op (no platform channel).
-class FakeWatch extends WatchService {
-  int snapshots = 0;
-
-  @override
-  Future<void> pushSnapshot(Map<String, dynamic> payload) async {
-    snapshots++;
-  }
-}
-
-ProviderContainer _container(FakeRepository repo, FakeWatch watch) {
+ProviderContainer _container(
+  InMemoryEventStore store,
+  InMemoryProfileStore profiles,
+  FakeWatch watch,
+) {
   return ProviderContainer(
     overrides: [
-      repositoryProvider.overrideWithValue(repo),
+      eventStoreProvider.overrideWithValue(store),
+      profileStoreProvider.overrideWithValue(profiles),
       watchServiceProvider.overrideWithValue(watch),
     ],
   );
@@ -58,29 +22,70 @@ ProviderContainer _container(FakeRepository repo, FakeWatch watch) {
 
 void main() {
   group('EventsNotifier', () {
-    late FakeRepository repo;
+    late InMemoryEventStore store;
     late FakeWatch watch;
     late ProviderContainer container;
 
     setUp(() {
-      repo = FakeRepository();
+      store = InMemoryEventStore();
       watch = FakeWatch();
-      container = _container(repo, watch);
+      container = _container(store, InMemoryProfileStore(), watch);
     });
 
     tearDown(() => container.dispose());
 
-    test('logInstant adds an event and pushes a snapshot', () async {
+    test('logInstant adds an event, saves it and pushes a snapshot', () async {
       final notifier = container.read(eventsProvider.notifier);
-      await notifier.logInstant(
+      final e = await notifier.logInstant(
         type: EventType.diaper,
         data: {'diaperKind': 'wet'},
         at: DateTime(2026, 9, 27, 10, 0),
       );
+      // State updates before the store's stream catches up.
       final events = container.read(eventsProvider);
       expect(events.length, 1);
       expect(events.single.type, EventType.diaper);
-      expect(watch.snapshots, 1);
+      expect((watch.last!['lastDiaper'] as Map)['id'], e.id);
+
+      await pumpEventQueue();
+      expect(store.events.single.id, e.id);
+      expect(container.read(eventsProvider).single.id, e.id);
+    });
+
+    test('loads what the store already has', () async {
+      await store.save(ActivityEvent(
+        id: 'old',
+        type: EventType.diaper,
+        startTime: DateTime(2026, 9, 27, 9, 0),
+        endTime: DateTime(2026, 9, 27, 9, 0),
+        data: const {},
+        createdAt: DateTime(2026, 9, 27, 9, 0),
+      ));
+      final c = _container(store, InMemoryProfileStore(), watch);
+      addTearDown(c.dispose);
+      expect(c.read(eventsProvider), isEmpty);
+      await pumpEventQueue();
+      expect(c.read(eventsProvider).single.id, 'old');
+    });
+
+    test('changes from elsewhere reach state and the watch', () async {
+      container.read(eventsProvider); // start listening
+      await pumpEventQueue();
+      final before = watch.snapshots;
+
+      // Another parent's phone starts a sleep timer.
+      await store.save(ActivityEvent(
+        id: 'remote',
+        type: EventType.sleep,
+        startTime: DateTime(2026, 10, 3, 1, 0),
+        data: const {'active': true},
+        createdAt: DateTime(2026, 10, 3, 1, 0),
+      ));
+      await pumpEventQueue();
+
+      expect(container.read(eventsProvider).single.id, 'remote');
+      expect(watch.snapshots, greaterThan(before));
+      expect(watch.last!['activeSleepStart'], isNotNull);
     });
 
     test('startTimer creates an active timer; stopTimer ends it', () async {
@@ -93,7 +98,8 @@ void main() {
       expect(stopped, isNotNull);
       expect(stopped!.endTime, isNotNull);
       expect(notifier.activeTimer(EventType.sleep), isNull);
-      expect(watch.snapshots, 2);
+      expect(watch.last!['activeSleepStart'], isNull);
+      expect((watch.last!['lastSleep'] as Map)['id'], stopped.id);
     });
 
     test('startTimer and stopTimer honor an explicit time', () async {
@@ -129,6 +135,9 @@ void main() {
       final e = await notifier.logInstant(type: EventType.note, note: 'hi');
       expect(container.read(eventsProvider).length, 1);
       await notifier.remove(e.id);
+      expect(container.read(eventsProvider), isEmpty);
+      await pumpEventQueue();
+      expect(store.events, isEmpty);
       expect(container.read(eventsProvider), isEmpty);
     });
 
@@ -194,16 +203,17 @@ void main() {
 
     test('pushSnapshot sends to the watch', () async {
       final notifier = container.read(eventsProvider.notifier);
+      await pumpEventQueue(); // let the store's first emission land
+      final before = watch.snapshots;
       await notifier.pushSnapshot();
-      expect(watch.snapshots, 1);
+      expect(watch.snapshots, before + 1);
     });
   });
 
   group('eventsForDayProvider', () {
     test('returns only events for the given day', () async {
-      final repo = FakeRepository();
-      final watch = FakeWatch();
-      final container = _container(repo, watch);
+      final container =
+          _container(InMemoryEventStore(), InMemoryProfileStore(), FakeWatch());
       addTearDown(container.dispose);
 
       final notifier = container.read(eventsProvider.notifier);
@@ -226,17 +236,28 @@ void main() {
 
   group('ProfileNotifier', () {
     test('update persists and notifies', () async {
-      final repo = FakeRepository();
-      final watch = FakeWatch();
-      final container = _container(repo, watch);
+      final profiles = InMemoryProfileStore();
+      final container = _container(InMemoryEventStore(), profiles, FakeWatch());
       addTearDown(container.dispose);
 
       final notifier = container.read(profileProvider.notifier);
-      await notifier
-          .update(const BabyProfile(name: 'Miya', metricUnits: false));
-      expect(container.read(profileProvider).name, 'Miya');
+      await notifier.update(const BabyProfile(name: 'Kai', metricUnits: false));
+      expect(container.read(profileProvider).name, 'Kai');
       expect(container.read(profileProvider).metricUnits, isFalse);
-      expect(repo.getProfile().name, 'Miya');
+      await pumpEventQueue();
+      expect(profiles.profile.name, 'Kai');
+      expect(container.read(profileProvider).name, 'Kai');
+    });
+
+    test('loads the saved profile', () async {
+      final profiles = InMemoryProfileStore()
+        ..profile = const BabyProfile(name: 'Kai');
+      final container = _container(InMemoryEventStore(), profiles, FakeWatch());
+      addTearDown(container.dispose);
+
+      expect(container.read(profileProvider).name, 'Miya'); // default first
+      await pumpEventQueue();
+      expect(container.read(profileProvider).name, 'Kai');
     });
   });
 }
