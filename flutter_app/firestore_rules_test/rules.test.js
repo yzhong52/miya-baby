@@ -15,8 +15,10 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 
 let env;
@@ -99,6 +101,14 @@ describe('families', () => {
     await assertSucceeds(getDoc(doc(db('alice'), 'families/f1')));
     await assertFails(getDoc(doc(db('bob'), 'families/f1')));
     await assertFails(getDoc(doc(db(null), 'families/f1')));
+  });
+
+  test('a user can find their own families, but not query for others', async () => {
+    const mine = (who, uid) =>
+      getDocs(query(collection(db(who), 'families'), where('members', 'array-contains', uid)));
+    await assertSucceeds(mine('alice', 'alice'));
+    await assertFails(mine('bob', 'alice'));
+    await assertFails(getDocs(collection(db('alice'), 'families')));
   });
 
   test('a user can create a family with only themselves as member', async () => {

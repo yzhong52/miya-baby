@@ -1,22 +1,30 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'config.dart';
+import 'data/family_service.dart';
 import 'data/hive_stores.dart';
 import 'firebase_options.dart';
+import 'screens/auth_gate.dart';
 import 'screens/growth_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/stats_screen.dart';
+import 'services/auth_service.dart';
 import 'services/watch_service.dart';
 import 'state/providers.dart';
+import 'state/session.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Not used by any screen yet; data still lives in Hive until the
-  // Firestore stores land (see the Firebase plan in #17).
+  // Sign-in and families use Firebase when kFirebaseSync is on; events
+  // still live in Hive until the Firestore stores land (#17).
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -24,9 +32,20 @@ Future<void> main() async {
   final events = await HiveEventStore.open();
   final profile = await HiveProfileStore.open();
   final watch = WatchService()..init();
+  final session = kFirebaseSync
+      ? [
+          authServiceProvider
+              .overrideWithValue(FirebaseAuthService(FirebaseAuth.instance)),
+          familyServiceProvider
+              .overrideWithValue(FamilyService(FirebaseFirestore.instance)),
+          preferencesProvider
+              .overrideWithValue(await SharedPreferences.getInstance()),
+        ]
+      : const <Override>[];
   runApp(
     ProviderScope(
       overrides: [
+        ...session,
         eventStoreProvider.overrideWithValue(events),
         profileStoreProvider.overrideWithValue(profile),
         watchServiceProvider.overrideWithValue(watch),
@@ -79,7 +98,9 @@ class _MiyaBabyAppState extends ConsumerState<MiyaBabyApp> {
         ),
         useMaterial3: true,
       ),
-      home: const MainShell(),
+      home: kFirebaseSync
+          ? const AuthGate(child: MainShell())
+          : const MainShell(),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:miya_baby/data/stores.dart';
 import 'package:miya_baby/models/activity_event.dart';
 import 'package:miya_baby/models/baby_profile.dart';
+import 'package:miya_baby/services/auth_service.dart';
 import 'package:miya_baby/services/watch_service.dart';
 
 /// [EventStore] in memory. Writing to it directly from a test plays the
@@ -70,4 +71,32 @@ class FakeWatch extends WatchService {
     snapshots++;
     last = payload;
   }
+}
+
+/// [AuthService] whose user a test sets directly.
+class FakeAuthService implements AuthService {
+  final _users = StreamController<AppUser?>.broadcast();
+  AppUser? _user;
+  int signIns = 0;
+
+  /// Sign in (or out, with null) as if Firebase reported it.
+  void setUser(AppUser? user) {
+    _user = user;
+    _users.add(user);
+  }
+
+  @override
+  Stream<AppUser?> userChanges() async* {
+    yield _user;
+    yield* _users.stream;
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    signIns++;
+    setUser(const AppUser(uid: 'alice', email: 'alice@example.com'));
+  }
+
+  @override
+  Future<void> signOut() async => setUser(null);
 }
