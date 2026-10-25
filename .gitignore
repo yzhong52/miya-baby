@@ -26,3 +26,9 @@ flutter_app/android/local.properties
 # Hive
 *.hive
 *.lock
+
+# Firebase rules tests / emulator
+node_modules/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

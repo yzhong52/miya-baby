@@ -1,8 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'data/hive_stores.dart';
+import 'firebase_options.dart';
 import 'screens/growth_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/home_screen.dart';
@@ -13,6 +15,11 @@ import 'state/providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Not used by any screen yet; data still lives in Hive until the
+  // Firestore stores land (see the Firebase plan in #17).
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await Hive.initFlutter();
   final events = await HiveEventStore.open();
   final profile = await HiveProfileStore.open();

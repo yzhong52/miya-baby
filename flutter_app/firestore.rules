@@ -1,0 +1,76 @@
+rules_version = '2';
+
+// Security rules for Miya Baby. Data model and reasoning: the Firebase eng
+// plan for #17. Tests: firestore_rules_test/ (run against the emulator).
+//
+//   families/{familyId}                  members: [uid], createdBy, createdAt
+//   families/{familyId}/events/{eventId} one ActivityEvent
+//   families/{familyId}/meta/profile     the baby profile
+//   inviteCodes/{code}                   familyId, createdBy, expiresAt
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function family(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId));
+    }
+
+    function isMember(familyId) {
+      return signedIn() && request.auth.uid in family(familyId).data.members;
+    }
+
+    // Joining: the only change is the caller's uid appended to members,
+    // plus the invite code it used (joinCode), which must name this family
+    // and not have expired.
+    function isValidJoin(familyId) {
+      let invite = get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.joinCode));
+      return signedIn()
+        && !(request.auth.uid in resource.data.members)
+        && request.resource.data.members == resource.data.members.concat([request.auth.uid])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'joinCode'])
+        && invite.data.familyId == familyId
+        && invite.data.expiresAt > request.time;
+    }
+
+    function isValidEvent(event) {
+      return event.type in ['feeding', 'diaper', 'sleep', 'growth', 'note']
+        && event.startTime is timestamp
+        && event.createdAt is timestamp;
+    }
+
+    match /families/{familyId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+
+      // A new family starts with its creator as the only member.
+      allow create: if signedIn()
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.keys().hasOnly(['members', 'createdBy', 'createdAt']);
+
+      allow update: if isValidJoin(familyId);
+
+      match /events/{eventId} {
+        allow read, delete: if isMember(familyId);
+        allow create, update: if isMember(familyId) && isValidEvent(request.resource.data);
+      }
+
+      match /meta/{docId} {
+        allow read, write: if isMember(familyId);
+      }
+    }
+
+    // Anyone signed in may look up a code they were given, but never list
+    // codes, so they can't be enumerated.
+    match /inviteCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if isMember(request.resource.data.familyId)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.expiresAt is timestamp;
+      allow delete: if isMember(resource.data.familyId);
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "miya-baby",
+          "appId": "1:591054713430:android:9a2c50d834fdb3303fc1f7",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "miya-baby",
+          "appId": "1:591054713430:ios:3497bb6e63e70a3d3fc1f7",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "miya-baby",
+          "configurations": {
+            "android": "1:591054713430:android:9a2c50d834fdb3303fc1f7",
+            "ios": "1:591054713430:ios:3497bb6e63e70a3d3fc1f7"
+          }
+        }
+      }
+    }
+  }
+}

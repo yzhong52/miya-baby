@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "591054713430",
+    "project_id": "miya-baby",
+    "storage_bucket": "miya-baby.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:591054713430:android:9a2c50d834fdb3303fc1f7",
+        "android_client_info": {
+          "package_name": "com.yuchen.miyababy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0mXJYIVDfPFqQ0YHtGtRqcdXr4MXV99w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
