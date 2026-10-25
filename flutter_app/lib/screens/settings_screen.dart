@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../config.dart';
 import '../data/export.dart';
 import '../state/providers.dart';
+import '../widgets/family_section.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -104,6 +106,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (kFirebaseSync) const FamilySection(),
           Text('Data', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(

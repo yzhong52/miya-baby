@@ -7,10 +7,10 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../data/background_write.dart';
 import '../data/stores.dart';
 import '../models/activity_event.dart';
 import '../models/baby_profile.dart';
@@ -31,21 +31,6 @@ final watchServiceProvider = Provider<WatchService>((ref) {
   throw UnimplementedError('watchServiceProvider must be overridden');
 });
 
-/// Start a store write without waiting for it, and report it if it fails.
-///
-/// Notifiers update their own state first, so the UI never waits on the
-/// store; see [EventStore.save] for why waiting could hang offline.
-void _write(Future<void> write, String what) {
-  write.catchError((Object e, StackTrace st) {
-    FlutterError.reportError(FlutterErrorDetails(
-      exception: e,
-      stack: st,
-      library: 'providers',
-      context: ErrorDescription(what),
-    ));
-  });
-}
-
 // ------------------------------------------------------------------ profile
 
 /// Holds the baby profile, kept in sync with the [ProfileStore].
@@ -60,7 +45,7 @@ class ProfileNotifier extends StateNotifier<BabyProfile> {
 
   Future<void> update(BabyProfile profile) async {
     state = profile;
-    _write(_store.save(profile), 'saving the profile');
+    backgroundWrite(_store.save(profile), 'saving the profile');
   }
 
   @override
@@ -106,13 +91,13 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
   /// Add an event: update state, notify the watch, and save it.
   Future<ActivityEvent> add(ActivityEvent event) async {
     _upsert(event);
-    _write(_store.save(event), 'saving event ${event.id}');
+    backgroundWrite(_store.save(event), 'saving event ${event.id}');
     return event;
   }
 
   Future<void> update(ActivityEvent event) async {
     _upsert(event);
-    _write(_store.save(event), 'saving event ${event.id}');
+    backgroundWrite(_store.save(event), 'saving event ${event.id}');
   }
 
   Future<void> remove(String id) async {
@@ -120,7 +105,7 @@ class EventsNotifier extends StateNotifier<List<ActivityEvent>> {
       for (final e in state)
         if (e.id != id) e,
     ]);
-    _write(_store.delete(id), 'deleting event $id');
+    backgroundWrite(_store.delete(id), 'deleting event $id');
   }
 
   @override

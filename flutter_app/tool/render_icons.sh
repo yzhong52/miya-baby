@@ -1,5 +1,5 @@
 #!/bin/sh
-# Render web icons from assets/icon/app_icon.svg. Needs rsvg-convert
+# Render web icons and the in-app icon from assets/icon/app_icon.svg. Needs rsvg-convert
 # (brew install librsvg). Run from flutter_app/.
 set -eu
 src=assets/icon/app_icon.svg
@@ -13,4 +13,6 @@ for size in 192 512; do
   rsvg-convert -w $size -h $size "$src" -o web/icons/Icon-maskable-$size.png
 done
 rsvg-convert -w 32 -h 32 "$rounded" -o web/favicon.png
+# In-app (sign-in screen); Flutter rounds the corners itself.
+rsvg-convert -w 360 -h 360 "$src" -o assets/icon/app_icon.png
 rm "$rounded"

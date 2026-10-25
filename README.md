@@ -64,6 +64,8 @@ The app is registered with the Firebase project `miya-baby`
 `flutterfire configure`). Security rules and indexes live in
 `flutter_app/firestore.rules` and `flutter_app/firestore.indexes.json`.
 
+- Sign-in and family sharing are behind a flag while the Firebase work is
+  in progress: `flutter run --dart-define=FIREBASE_SYNC=true`
 - Test the rules (needs Node and Java; runs the Firestore emulator):
   `cd flutter_app/firestore_rules_test && npm install && npm test`
 - Deploy rules and indexes: `cd flutter_app && firebase deploy --only firestore`
