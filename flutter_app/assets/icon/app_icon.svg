@@ -1,0 +1,14 @@
+<!-- Miya Baby app icon: a crescent moon holding a heart, with a star.
+     Full-bleed square; platforms apply their own corner mask. The artwork
+     stays inside the central 80% circle, so it also works as a maskable
+     web icon. Regenerate the PNGs with tool/render_icons.sh. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#00897B"/>
+  <mask id="crescent">
+    <rect width="1024" height="1024" fill="white"/>
+    <circle cx="600" cy="430" r="250" fill="black"/>
+  </mask>
+  <circle cx="490" cy="530" r="290" fill="#FFF4E6" mask="url(#crescent)"/>
+  <path d="M600 560 c -40 -60 -140 -30 -110 50 c 20 50 110 100 110 100 c 0 0 90 -50 110 -100 c 30 -80 -70 -110 -110 -50 z" fill="#FFAB91"/>
+  <path d="M735 300 l 14 34 l 36 3 l -28 23 l 9 35 l -31 -19 l -31 19 l 9 -35 l -28 -23 l 36 -3 z" fill="#FFF4E6"/>
+</svg>
