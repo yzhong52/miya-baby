@@ -34,7 +34,8 @@
           "projectId": "miya-baby",
           "configurations": {
             "android": "1:591054713430:android:9a2c50d834fdb3303fc1f7",
-            "ios": "1:591054713430:ios:3497bb6e63e70a3d3fc1f7"
+            "ios": "1:591054713430:ios:3497bb6e63e70a3d3fc1f7",
+            "web": "1:591054713430:web:d3d40bfa66564e0b3fc1f7"
           }
         }
       }
